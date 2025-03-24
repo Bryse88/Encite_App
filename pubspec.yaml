@@ -9,13 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_screenutil: ^5.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_screenutil: ^5.9.3
   flutter_svg: ^0.22.0
+  lottie: ^3.3.1
+  rive: ^0.13.20
 flutter:
   uses-material-design: true
 
