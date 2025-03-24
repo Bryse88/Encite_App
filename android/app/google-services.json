@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "235389720804",
+    "project_id": "project888-29925",
+    "storage_bucket": "project888-29925.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:235389720804:android:c4b9cd03bde8f08c78b4f1",
+        "android_client_info": {
+          "package_name": "com.example.encite"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANgrgfBuYu2RdBlsKT3CcZXOtdDchaXng"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
