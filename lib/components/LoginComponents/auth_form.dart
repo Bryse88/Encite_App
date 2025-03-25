@@ -1,6 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'primary_button.dart';
+import 'auth/name_input_field.dart';
+import 'auth/phone_input_field.dart';
+import 'auth/auth_title.dart';
 
 class AuthForm extends StatelessWidget {
   final bool isLogin;
@@ -20,76 +23,32 @@ class AuthForm extends StatelessWidget {
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF0A0A0A),
-                  Color(0xFF121726),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.08),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 15,
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
+            decoration: _containerDecoration(),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  isLogin ? "Sign in with phone" : "Create account",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                AuthTitle(isLogin: isLogin),
                 const SizedBox(height: 24),
-                _buildInputField(
-                  hintText: "Phone Number",
-                  icon: Icons.phone,
-                  keyboardType: TextInputType.phone,
-                ),
+                const PhoneInputField(),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
-                  transitionBuilder:
-                      (Widget child, Animation<double> animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SizeTransition(
-                        sizeFactor: animation,
-                        axisAlignment: -1.0,
-                        child: child,
-                      ),
-                    );
-                  },
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: SizeTransition(
+                      sizeFactor: animation,
+                      axisAlignment: -1.0,
+                      child: child,
+                    ),
+                  ),
                   child: !isLogin
-                      ? Column(
-                          key: const ValueKey('signup'),
-                          children: [
-                            const SizedBox(height: 16),
-                            _buildInputField(
-                              hintText: "Full Name",
-                              icon: Icons.person_outline,
-                            ),
-                          ],
-                        )
+                      ? const NameInputField(key: ValueKey('signup'))
                       : const SizedBox(key: ValueKey('login')),
                 ),
                 const SizedBox(height: 24),
                 PrimaryButton(
                   text: isLogin ? "Continue" : "Create Account",
                   onPressed: () {
-                    // Handle login/signup
+                    // TODO: Add Firebase auth logic
                   },
                 ),
               ],
@@ -100,33 +59,27 @@ class AuthForm extends StatelessWidget {
     );
   }
 
-  Widget _buildInputField({
-    required String hintText,
-    required IconData icon,
-    bool obscureText = false,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F111A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF1E2235),
-          width: 1,
-        ),
+  BoxDecoration _containerDecoration() {
+    return BoxDecoration(
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFF0A0A0A),
+          Color(0xFF121726),
+        ],
       ),
-      child: TextField(
-        style: const TextStyle(color: Colors.white),
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-          prefixIcon: Icon(icon, color: const Color(0xFF3E6CDF)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
-        ),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: Colors.white.withOpacity(0.08),
+        width: 1.5,
       ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.5),
+          blurRadius: 15,
+        ),
+      ],
     );
   }
 }

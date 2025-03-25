@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:encite/components/LoginComponents/auth/SocialAuthButtons.dart';
 import 'package:encite/components/LoginComponents/auth_form.dart';
 import 'package:encite/components/LoginComponents/impaler_bar.dart';
 import 'package:encite/components/LoginComponents/logo_with_name.dart';
@@ -93,6 +94,8 @@ class _LoginSignupPageState extends State<LoginSignupPage>
                         ),
                       ],
                     ),
+                    const SizedBox(height: 20),
+                    const SocialAuthButtons(),
                     const SizedBox(height: 20),
                     const SocialLoginOptions(),
                   ],
