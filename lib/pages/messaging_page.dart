@@ -23,11 +23,11 @@ class ChatsPage extends StatelessWidget {
           child: Column(
             children: [
               // Header
-              Padding(
-                padding: const EdgeInsets.all(20.0),
+              const Padding(
+                padding: EdgeInsets.all(20.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
+                  children: [
                     Text(
                       'Chats',
                       style: TextStyle(

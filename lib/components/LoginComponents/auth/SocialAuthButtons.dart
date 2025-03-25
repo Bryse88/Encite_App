@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:encite/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -44,9 +45,11 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
     }
   }
 
+// Modify the _signInWithGoogle method
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
       setState(() => _isLoading = true);
+      print('Reached Step 1');
 
       // Begin Google sign in flow
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -62,22 +65,31 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-
+      print("reached step 2");
       // Sign in to Firebase
       final userCredential = await _auth.signInWithCredential(credential);
-
+      print("reach step 3");
       // Store user data
       if (userCredential.user != null) {
         await _storeUserData(userCredential.user!);
-        _navigateToHome();
+        print('reacheds step 4');
+
+        // Make sure we're still mounted before navigating
+        if (mounted) {
+          setState(() =>
+              _isLoading = false); // Reset loading state before navigation
+          print('Google sign-in successful: ${userCredential.user!.uid}');
+          _navigateToHome();
+        }
       }
     } catch (e) {
+      print('Google sign-in error: $e'); // Add logging
       _showError(context, 'Google sign-in failed: ${_getReadableError(e)}');
-    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+// Similarly modify the _signInWithApple method
   Future<void> _signInWithApple(BuildContext context) async {
     try {
       setState(() => _isLoading = true);
@@ -113,13 +125,26 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
       if (userCredential.user != null) {
         await _storeUserData(userCredential.user!,
             displayName: fullName?.isNotEmpty == true ? fullName : null);
-        _navigateToHome();
+
+        // Make sure we're still mounted before navigating
+        if (mounted) {
+          setState(() =>
+              _isLoading = false); // Reset loading state before navigation
+          _navigateToHome();
+        }
       }
     } catch (e) {
+      print('Apple sign-in error: $e'); // Add logging
       _showError(context, 'Apple sign-in failed: ${_getReadableError(e)}');
-    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+// Update the _navigateToHome method for better navigation
+  void _navigateToHome() {
+    // Use pushReplacement instead of push to prevent going back to login
+    Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomePage()));
   }
 
   // Get a more user-friendly error message
@@ -151,12 +176,6 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
         duration: const Duration(seconds: 4),
       ),
     );
-  }
-
-  void _navigateToHome() {
-    // Navigate to your home page or dashboard after login
-    Navigator.of(context)
-        .pushReplacementNamed('/home'); // Update with your route
   }
 
   @override
