@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:encite/components/HomeComponents/app_icon_button.dart';
 import 'package:encite/components/HomeComponents/background_painter.dart';
 import 'package:encite/components/HomeComponents/home_menu_item.dart';
-import 'package:encite/pages/login.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -24,12 +23,15 @@ class _HomePageState extends State<HomePage>
     HomeMenuItem(
         title: 'Group Chats',
         icon: Icons.chat_bubble_outline,
-        color: Color(0xFF5AC8FA)),
-    HomeMenuItem(title: 'My Day', icon: Icons.today, color: Color(0xFF4CD964)),
+        color: const Color(0xFF5AC8FA)),
     HomeMenuItem(
-        title: 'AI Schedule', icon: Icons.schedule, color: Color(0xFFFF2D55)),
+        title: 'My Day', icon: Icons.today, color: const Color(0xFF4CD964)),
     HomeMenuItem(
-        title: 'Explore', icon: Icons.explore, color: Color(0xFF007AFF)),
+        title: 'AI Schedule',
+        icon: Icons.schedule,
+        color: const Color(0xFFFF2D55)),
+    HomeMenuItem(
+        title: 'Explore', icon: Icons.explore, color: const Color(0xFF007AFF)),
     HomeMenuItem(
         title: 'Create Event',
         icon: Icons.add_circle_outline,
