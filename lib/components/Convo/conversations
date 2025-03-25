@@ -1,0 +1,136 @@
+# Firestore Data Model for Chat Feature
+
+## Collections Structure
+
+```
+/conversations
+  /{conversationId}
+    - type: "direct" | "group"
+    - createdAt: timestamp
+    - updatedAt: timestamp
+    - lastMessage: {
+        text: string,
+        senderId: string,
+        timestamp: timestamp
+      }
+    - participants: [userId1, userId2, ...] // Array of user IDs
+    - participantInfo: {
+        userId1: {
+          displayName: string,
+          photoURL: string,
+          lastSeen: timestamp,
+          isTyping: boolean
+        },
+        userId2: {...}
+      }
+    - groupName: string  // Only for group chats
+    - groupPhoto: string  // Only for group chats
+
+/conversations/{conversationId}/messages
+  /{messageId}
+    - senderId: string
+    - text: string
+    - timestamp: timestamp
+    - type: "text" | "image" | "file"  // For future extensibility
+    - mediaUrl: string  // For image/file messages (future)
+    - readBy: {
+        userId1: timestamp,
+        userId2: timestamp,
+        ...
+      }
+
+/users
+  /{userId}
+    - displayName: string
+    - photoURL: string
+    - lastActive: timestamp
+    - conversations: [conversationId1, conversationId2, ...] // For quick access
+```
+
+## Example Documents
+
+### One-on-One Conversation
+
+```json
+// /conversations/conv123
+{
+  "type": "direct",
+  "createdAt": "2025-03-25T14:30:00Z",
+  "updatedAt": "2025-03-25T15:45:00Z",
+  "lastMessage": {
+    "text": "See you tomorrow!",
+    "senderId": "user456",
+    "timestamp": "2025-03-25T15:45:00Z"
+  },
+  "participants": ["user123", "user456"],
+  "participantInfo": {
+    "user123": {
+      "displayName": "John Doe",
+      "photoURL": "https://example.com/john.jpg",
+      "lastSeen": "2025-03-25T15:46:00Z",
+      "isTyping": false
+    },
+    "user456": {
+      "displayName": "Jane Smith",
+      "photoURL": "https://example.com/jane.jpg",
+      "lastSeen": "2025-03-25T15:45:10Z",
+      "isTyping": false
+    }
+  }
+}
+```
+
+### Group Chat
+
+```json
+// /conversations/group789
+{
+  "type": "group",
+  "createdAt": "2025-03-20T10:00:00Z",
+  "updatedAt": "2025-03-25T16:20:00Z",
+  "lastMessage": {
+    "text": "Who's joining the meeting?",
+    "senderId": "user789",
+    "timestamp": "2025-03-25T16:20:00Z"
+  },
+  "participants": ["user123", "user456", "user789"],
+  "participantInfo": {
+    "user123": {
+      "displayName": "John Doe",
+      "photoURL": "https://example.com/john.jpg",
+      "lastSeen": "2025-03-25T16:22:00Z",
+      "isTyping": false
+    },
+    "user456": {
+      "displayName": "Jane Smith",
+      "photoURL": "https://example.com/jane.jpg",
+      "lastSeen": "2025-03-25T16:15:10Z",
+      "isTyping": true
+    },
+    "user789": {
+      "displayName": "Mike Johnson",
+      "photoURL": "https://example.com/mike.jpg",
+      "lastSeen": "2025-03-25T16:20:10Z",
+      "isTyping": false
+    }
+  },
+  "groupName": "Project Encite Team",
+  "groupPhoto": "https://example.com/team.jpg"
+}
+```
+
+### Message
+
+```json
+// /conversations/conv123/messages/msg456
+{
+  "senderId": "user123",
+  "text": "See you tomorrow!",
+  "timestamp": "2025-03-25T15:45:00Z",
+  "type": "text",
+  "readBy": {
+    "user123": "2025-03-25T15:45:00Z",
+    "user456": "2025-03-25T15:46:30Z"
+  }
+}
+```
