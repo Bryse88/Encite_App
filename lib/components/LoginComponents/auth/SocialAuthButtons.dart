@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:encite/pages/app_navigator.dart';
 import 'package:encite/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -144,7 +145,7 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
   void _navigateToHome() {
     // Use pushReplacement instead of push to prevent going back to login
     Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomePage()));
+        MaterialPageRoute(builder: (context) => NavigationPage()));
   }
 
   // Get a more user-friendly error message

@@ -6,16 +6,16 @@ import 'package:encite/pages/proflie.dart';
 import 'package:encite/pages/scheduler.dart';
 import 'package:flutter/material.dart';
 
-class Navigation extends StatefulWidget {
+class NavigationPage extends StatefulWidget {
   final int initialPageIndex;
 
-  const Navigation({Key? key, this.initialPageIndex = 0}) : super(key: key);
+  const NavigationPage({Key? key, this.initialPageIndex = 0}) : super(key: key);
 
   @override
-  State<Navigation> createState() => _AppNavigatorState();
+  State<NavigationPage> createState() => _AppNavigatorState();
 }
 
-class _AppNavigatorState extends State<Navigation> {
+class _AppNavigatorState extends State<NavigationPage> {
   late int _currentIndex;
   late final PageController _pageController;
 

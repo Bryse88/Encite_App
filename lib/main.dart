@@ -1,3 +1,4 @@
+import 'package:encite/components/LoginComponents/Authentication/auth_wrapper.dart';
 import 'package:encite/firebase_options.dart';
 import 'package:encite/pages/app_navigator.dart';
 import 'package:encite/pages/login.dart';
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'SF Pro Display',
       ),
-      home: LoginSignupPage(), // ← instead of just HomePage
+      home: AuthWrapper(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,
     );
   }
