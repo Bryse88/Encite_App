@@ -4,6 +4,8 @@ import 'package:encite/components/HomeComponents/background_painter.dart';
 import 'package:encite/components/HomeComponents/home_menu_item.dart';
 import 'package:encite/pages/login.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -15,6 +17,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
+  String _firstName = '';
+  bool _isLoading = true;
 
   final List<HomeMenuItem> menuItems = [
     HomeMenuItem(
@@ -53,6 +57,59 @@ class _HomePageState extends State<HomePage>
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat(reverse: true);
+
+    // Fetch user's display name when the page initializes
+    _fetchUserName();
+  }
+
+  Future<void> _fetchUserName() async {
+    try {
+      // Get current user
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        // Fetch user document from Firestore
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists && userDoc.data() != null) {
+          final data = userDoc.data()!;
+          if (data.containsKey('displayName')) {
+            // Get the first word from DisplayName
+            final fullName = data['displayName'] as String;
+            final firstName = fullName.split(' ')[0];
+
+            setState(() {
+              _firstName = firstName;
+              _isLoading = false;
+            });
+          } else {
+            setState(() {
+              _firstName = 'there';
+              _isLoading = false;
+            });
+          }
+        } else {
+          setState(() {
+            _firstName = 'there';
+            _isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _firstName = 'there';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching user name: $e');
+      setState(() {
+        _firstName = 'there';
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -85,14 +142,23 @@ class _HomePageState extends State<HomePage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Hey, User',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      _isLoading
+                          ? const SizedBox(
+                              height: 22,
+                              width: 120,
+                              child: LinearProgressIndicator(
+                                backgroundColor: Colors.white10,
+                                color: Colors.white38,
+                              ),
+                            )
+                          : Text(
+                              'Hey, $_firstName!',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.1),
