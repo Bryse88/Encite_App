@@ -12,34 +12,43 @@ class ChatService {
   String get currentUserId => currentUser?.uid ?? '';
 
   // Get all conversations for current user
-  Stream<List<Conversation>> getConversations() {
-    return _firestore
-        .collection('conversations')
-        .where('participants', arrayContains: currentUserId)
-        .orderBy('lastMessageTimestamp', descending: true)
-        .snapshots()
-        .asyncMap((snapshot) async {
-      List<Conversation> conversations = [];
+  Stream<List<Conversation>> getConversations() async* {
+    try {
+      yield* _firestore
+          .collection('conversations')
+          .where('participants', arrayContains: currentUserId)
+          .orderBy('lastMessageTimestamp', descending: true)
+          .snapshots()
+          .asyncMap((snapshot) async {
+        List<Conversation> conversations = [];
 
-      for (var doc in snapshot.docs) {
-        // Fetch participants for each conversation
-        Map<String, ParticipantInfo> participants = {};
-        final participantsSnapshot = await _firestore
-            .collection('conversations')
-            .doc(doc.id)
-            .collection('participants')
-            .get();
+        for (var doc in snapshot.docs) {
+          // Fetch participants for each conversation
+          Map<String, ParticipantInfo> participants = {};
+          final participantsSnapshot = await _firestore
+              .collection('conversations')
+              .doc(doc.id)
+              .collection('participants')
+              .get();
 
-        for (var participantDoc in participantsSnapshot.docs) {
-          participants[participantDoc.id] =
-              ParticipantInfo.fromMap(participantDoc);
+          for (var participantDoc in participantsSnapshot.docs) {
+            participants[participantDoc.id] =
+                ParticipantInfo.fromMap(participantDoc);
+          }
+
+          conversations.add(Conversation.fromFirestore(doc, participants));
         }
 
-        conversations.add(Conversation.fromFirestore(doc, participants));
+        return conversations;
+      });
+    } on FirebaseException catch (e) {
+      if (e.code == 'failed-precondition') {
+        // Print the URL for creating the index
+        print('Error loading conversations: ${e.message}');
+      } else {
+        rethrow;
       }
-
-      return conversations;
-    });
+    }
   }
 
   // Get messages for a specific conversation
