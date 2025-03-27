@@ -31,7 +31,7 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
       await _firestore.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'email': user.email,
-        'displayName': name,
+        'name': name,
         'photoURL': user.photoURL,
         'phoneNumber': user.phoneNumber,
         'createdAt': FieldValue.serverTimestamp(),

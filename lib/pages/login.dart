@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:encite/components/HomeComponents/background_painter.dart';
 import 'package:encite/components/LoginComponents/auth/SocialAuthButtons.dart';
 import 'package:encite/components/LoginComponents/auth_form.dart';
 import 'package:encite/components/LoginComponents/impaler_bar.dart';

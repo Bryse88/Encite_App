@@ -78,9 +78,9 @@ class _HomePageState extends State<HomePage>
 
         if (userDoc.exists && userDoc.data() != null) {
           final data = userDoc.data()!;
-          if (data.containsKey('displayName')) {
+          if (data.containsKey('name')) {
             // Get the first word from DisplayName
-            final fullName = data['displayName'] as String;
+            final fullName = data['name'] as String;
             final firstName = fullName.split(' ')[0];
 
             setState(() {
