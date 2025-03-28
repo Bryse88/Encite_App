@@ -1,4 +1,4 @@
-import 'package:encite/components/LoginComponents/Authentication/auth_services.dart';
+import 'package:encite/components/LoginComponents/AuthenticationServices/auth_services.dart';
 import 'package:encite/pages/app_navigator.dart';
 import 'package:encite/pages/app_pages/home_page.dart';
 import 'package:flutter/material.dart';

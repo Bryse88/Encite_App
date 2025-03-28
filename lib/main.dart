@@ -1,4 +1,4 @@
-import 'package:encite/components/LoginComponents/Authentication/auth_wrapper.dart';
+import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
 import 'package:encite/firebase_options.dart';
 import 'package:encite/pages/app_pages/settings_page.dart';
 import 'package:encite/pages/chat_screen.dart';
@@ -35,9 +35,13 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         // Add routes here
-        '/profile': (context) => ProfilePage(),
-        '/messages': (context) => ChatsPage(),
-        '/settings': (context) => SettingsPage()
+        '/profile': (context) => const ProfilePage(),
+        '/messages': (context) => const ChatsPage(),
+        '/settings': (context) => const SettingsPage(),
+        '/chat': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return ChatScreen(conversationId: args['conversationId']);
+        },
       },
       home: const AuthWrapper(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,

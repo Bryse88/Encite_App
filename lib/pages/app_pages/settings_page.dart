@@ -1,6 +1,7 @@
 import 'dart:ui';
-import 'package:encite/components/SettingComponents/Pages/contact_us_page.dart';
-import 'package:encite/components/SettingComponents/Pages/faq_page.dart';
+import 'package:encite/components/HomeComponents/SettingsPages/contact_us_page.dart';
+import 'package:encite/components/HomeComponents/SettingsPages/faq_page.dart';
+import 'package:encite/components/HomeComponents/SettingsPages/report_bug_page.dart';
 import 'package:encite/pages/Legal_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -328,6 +329,11 @@ class _SettingsPageState extends State<SettingsPage>
                               iconColor: Colors.orange,
                               onTap: () {
                                 // Navigate to bug report
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => ReportBugPage(),
+                                  ),
+                                );
                               },
                             ),
                           ],

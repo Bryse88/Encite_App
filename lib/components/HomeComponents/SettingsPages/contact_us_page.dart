@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:encite/components/background_painter.dart';
+import 'package:encite/components/MainComponents/background_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';

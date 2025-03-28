@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:encite/components/HomeComponents/app_icon_button.dart';
-import 'package:encite/components/background_painter.dart';
+import 'package:encite/components/MainComponents/background_painter.dart';
 import 'package:encite/components/HomeComponents/home_menu_item.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -167,21 +167,11 @@ class _HomePageState extends State<HomePage>
                                 color: Colors.white,
                               ),
                             ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.settings, color: Colors.white),
-                          onPressed: () {
-                            // Navigate to settings
-                            Navigator.of(context).pushNamed('/settings');
-                          },
-                        ),
-                      ),
                     ],
                   ),
+                ),
+                const SizedBox(
+                  height: 16,
                 ),
                 Expanded(
                   child: _loadingMenuItems

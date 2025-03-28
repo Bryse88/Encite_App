@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:encite/components/background_painter.dart';
+import 'package:encite/components/MainComponents/background_painter.dart';
 import 'package:encite/components/ProfileComponents/Widgets/favorite_categories.dart';
 import 'package:encite/components/ProfileComponents/Widgets/impaler_bar.dart';
 import 'package:encite/components/ProfileComponents/Widgets/logout_button.dart';

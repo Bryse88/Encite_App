@@ -1,9 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'primary_button.dart';
-import 'auth/name_input_field.dart';
-import 'auth/phone_input_field.dart';
-import 'auth/auth_title.dart';
+import '../primary_button.dart';
+import '../auth/name_input_field.dart';
+import '../auth/phone_input_field.dart';
+import '../auth/auth_title.dart';
 
 class AuthForm extends StatelessWidget {
   final bool isLogin;
