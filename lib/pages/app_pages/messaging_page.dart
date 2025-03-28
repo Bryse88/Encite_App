@@ -1,7 +1,7 @@
 import 'dart:ui';
-import 'package:encite/components/Convo/chat_service.dart';
+import 'package:encite/components/ConvoComponents/chat_service.dart';
 import 'package:flutter/material.dart';
-import 'package:encite/components/Convo/chat_models.dart';
+import 'package:encite/components/ConvoComponents/chat_models.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 

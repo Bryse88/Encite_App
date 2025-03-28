@@ -1,11 +1,11 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:encite/components/background_painter.dart';
 import 'package:encite/components/ProfileComponents/Widgets/favorite_categories.dart';
 import 'package:encite/components/ProfileComponents/Widgets/impaler_bar.dart';
 import 'package:encite/components/ProfileComponents/Widgets/logout_button.dart';
 import 'package:encite/components/ProfileComponents/Widgets/nav_bar_item.dart';
 import 'package:encite/components/ProfileComponents/Widgets/profile_header.dart';
-import 'package:encite/components/ProfileComponents/background_painter.dart';
 import 'package:encite/components/ProfileComponents/recent_activity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -107,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage>
                   animation: _animationController,
                   builder: (context, child) {
                     return CustomPaint(
-                      painter: BackgroundPainter1(_animationController.value),
+                      painter: BackgroundPainter(_animationController.value),
                       size: MediaQuery.of(context).size,
                     );
                   },
@@ -158,36 +158,6 @@ class _ProfilePageState extends State<ProfilePage>
                       Expanded(child: buildRecentActivity(userData1)),
                       buildLogoutButton(),
                     ],
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: ClipRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
-                          border: Border(
-                            top: BorderSide(
-                              color: Colors.white.withOpacity(0.1),
-                              width: 0.5,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            buildNavBarItem(Icons.home_outlined, 'Home'),
-                            buildNavBarItem(Icons.schedule, 'Schedule'),
-                            buildNavBarItem(Icons.chat_bubble_outline, 'Chats'),
-                            buildNavBarItem(Icons.person, 'Profile',
-                                isActive: true),
-                          ],
-                        ),
-                      ),
-                    ),
                   ),
                 ),
               ],

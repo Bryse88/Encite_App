@@ -1,7 +1,7 @@
 // services/chat_service.dart
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:encite/components/Convo/chat_models.dart';
+import 'package:encite/components/ConvoComponents/chat_models.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatService {

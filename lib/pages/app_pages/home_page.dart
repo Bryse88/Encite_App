@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:encite/components/HomeComponents/app_icon_button.dart';
-import 'package:encite/components/HomeComponents/background_painter.dart';
+import 'package:encite/components/background_painter.dart';
 import 'package:encite/components/HomeComponents/home_menu_item.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,39 +18,8 @@ class _HomePageState extends State<HomePage>
   late AnimationController _animationController;
   String _firstName = '';
   bool _isLoading = true;
-
-  final List<HomeMenuItem> menuItems = [
-    HomeMenuItem(
-        title: 'Group Chats',
-        icon: Icons.chat_bubble_outline,
-        color: const Color(0xFF5AC8FA)),
-    HomeMenuItem(
-        title: 'My Day', icon: Icons.today, color: const Color(0xFF4CD964)),
-    HomeMenuItem(
-        title: 'AI Schedule',
-        icon: Icons.schedule,
-        color: const Color(0xFFFF2D55)),
-    HomeMenuItem(
-        title: 'Explore', icon: Icons.explore, color: const Color(0xFF007AFF)),
-    HomeMenuItem(
-        title: 'Create Event',
-        icon: Icons.add_circle_outline,
-        color: Color(0xFF5856D6)),
-    HomeMenuItem(
-        title: 'My Groups', icon: Icons.people, color: Color(0xFFFF9500)),
-    HomeMenuItem(
-        title: 'Calendar View',
-        icon: Icons.calendar_month,
-        color: Color(0xFFFFCC00)),
-    HomeMenuItem(
-        title: 'Social Hub', icon: Icons.public, color: Color(0xFFAF52DE)),
-    HomeMenuItem(
-        title: 'Discover',
-        icon: Icons.travel_explore,
-        color: Color(0xFF34C759)),
-    HomeMenuItem(
-        title: 'Settings', icon: Icons.settings, color: Color(0xFF8E8E93)),
-  ];
+  List<HomeMenuItem> _menuItems = [];
+  bool _loadingMenuItems = true;
 
   @override
   void initState() {
@@ -62,6 +31,9 @@ class _HomePageState extends State<HomePage>
 
     // Fetch user's display name when the page initializes
     _fetchUserName();
+
+    // Fetch menu items from Firestore
+    _fetchMenuItems();
   }
 
   Future<void> _fetchUserName() async {
@@ -110,6 +82,40 @@ class _HomePageState extends State<HomePage>
       setState(() {
         _firstName = 'there';
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchMenuItems() async {
+    try {
+      // Fetch menu items from Firestore
+      final menuItemsSnapshot = await FirebaseFirestore.instance
+          .collection('app_items')
+          .orderBy('order') // Add this if you want to control the order
+          .get();
+
+      final List<HomeMenuItem> items = menuItemsSnapshot.docs.map((doc) {
+        return HomeMenuItem.fromMap(doc.data(), doc.id);
+      }).toList();
+
+      setState(() {
+        _menuItems = items;
+        _loadingMenuItems = false;
+      });
+    } catch (e) {
+      print('Error fetching menu items: $e');
+      setState(() {
+        _loadingMenuItems = false;
+        // Optionally provide some default menu items in case of failure
+        _menuItems = [
+          HomeMenuItem(
+            id: 'default',
+            title: 'Settings',
+            icon: Icons.settings,
+            color: const Color(0xFF8E8E93),
+            route: '/settings',
+          ),
+        ];
       });
     }
   }
@@ -168,30 +174,47 @@ class _HomePageState extends State<HomePage>
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.settings, color: Colors.white),
-                          onPressed: () {},
+                          onPressed: () {
+                            // Navigate to settings
+                            Navigator.of(context).pushNamed('/settings');
+                          },
                         ),
                       ),
                     ],
                   ),
                 ),
                 Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 1.2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: menuItems.length,
-                    itemBuilder: (context, index) {
-                      return AppIconButton(
-                        item: menuItems[index],
-                        index: index,
-                      );
-                    },
-                  ),
+                  child: _loadingMenuItems
+                      ? const Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      : _menuItems.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No menu items found',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            )
+                          : GridView.builder(
+                              padding: const EdgeInsets.all(16),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 1.2,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                              itemCount: _menuItems.length,
+                              itemBuilder: (context, index) {
+                                return AppIconButton(
+                                  item: _menuItems[index],
+                                  index: index,
+                                );
+                              },
+                            ),
                 ),
               ],
             ),

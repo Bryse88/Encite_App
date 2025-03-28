@@ -1,11 +1,11 @@
 import 'dart:ui';
-import 'package:encite/components/HomeComponents/background_painter.dart';
+import 'package:encite/components/background_painter.dart';
 import 'package:encite/components/LoginComponents/auth/SocialAuthButtons.dart';
 import 'package:encite/components/LoginComponents/auth_form.dart';
 import 'package:encite/components/LoginComponents/impaler_bar.dart';
 import 'package:encite/components/LoginComponents/logo_with_name.dart';
 import 'package:encite/components/LoginComponents/social_login_options.dart';
-import 'package:encite/pages/proflie.dart';
+import 'package:encite/pages/app_pages/proflie.dart';
 import 'package:flutter/material.dart';
 
 class LoginSignupPage extends StatefulWidget {

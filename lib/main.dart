@@ -1,5 +1,9 @@
 import 'package:encite/components/LoginComponents/Authentication/auth_wrapper.dart';
 import 'package:encite/firebase_options.dart';
+import 'package:encite/pages/app_pages/settings_page.dart';
+import 'package:encite/pages/chat_screen.dart';
+import 'package:encite/pages/app_pages/messaging_page.dart';
+import 'package:encite/pages/app_pages/proflie.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -29,6 +33,12 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'SF Pro Display',
       ),
+      routes: {
+        // Add routes here
+        '/profile': (context) => ProfilePage(),
+        '/messages': (context) => ChatsPage(),
+        '/settings': (context) => SettingsPage()
+      },
       home: const AuthWrapper(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,
     );

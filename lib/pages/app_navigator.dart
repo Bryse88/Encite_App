@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:encite/pages/home_page.dart';
-import 'package:encite/pages/messaging_page.dart';
-import 'package:encite/pages/proflie.dart';
+import 'package:encite/pages/app_pages/home_page.dart';
+import 'package:encite/pages/app_pages/messaging_page.dart';
+import 'package:encite/pages/app_pages/proflie.dart';
 import 'package:encite/pages/scheduler.dart';
 import 'package:flutter/material.dart';
 

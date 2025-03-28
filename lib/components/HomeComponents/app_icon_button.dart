@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:encite/components/HomeComponents/home_menu_item.dart';
-import 'package:encite/pages/home_page.dart';
 import 'package:flutter/material.dart';
 
 class AppIconButton extends StatefulWidget {
@@ -66,7 +65,10 @@ class _AppIconButtonState extends State<AppIconButton>
               onTapUp: (_) => _controller.forward(),
               onTapCancel: () => _controller.forward(),
               onTap: () {
-                // Handle tap action
+                // Navigate to the specified route
+                if (widget.item.route.isNotEmpty) {
+                  Navigator.of(context).pushNamed(widget.item.route);
+                }
               },
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
@@ -101,7 +103,7 @@ class _AppIconButtonState extends State<AppIconButton>
                         Icon(
                           widget.item.icon,
                           size: 40,
-                          color: widget.item.color,
+                          color: Colors.white,
                         ),
                         const SizedBox(height: 8),
                         Text(

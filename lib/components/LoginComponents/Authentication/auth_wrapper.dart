@@ -1,5 +1,6 @@
 import 'package:encite/components/LoginComponents/Authentication/auth_services.dart';
 import 'package:encite/pages/app_navigator.dart';
+import 'package:encite/pages/app_pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:encite/pages/login.dart';
@@ -20,7 +21,7 @@ class AuthWrapper extends StatelessWidget {
             return const LoginSignupPage();
           } else {
             // User is logged in, go to Navigation page
-            return NavigationPage();
+            return HomePage();
           }
         }
 
