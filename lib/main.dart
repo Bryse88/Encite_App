@@ -1,5 +1,6 @@
 import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
 import 'package:encite/firebase_options.dart';
+import 'package:encite/pages/app_pages/onboarding_quiz.dart';
 import 'package:encite/pages/app_pages/settings_page.dart';
 import 'package:encite/pages/chat_screen.dart';
 import 'package:encite/pages/app_pages/messaging_page.dart';
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
           return ChatScreen(conversationId: args['conversationId']);
         },
+        '/groups': (context) => const ChatsPage(),
       },
       home: const AuthWrapper(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,
