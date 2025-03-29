@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
         },
         '/groups': (context) => const ChatsPage(),
       },
-      home: const AuthWrapper(), // ← instead of just HomePage
+      home: const OnboardingQuiz(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,
     );
   }

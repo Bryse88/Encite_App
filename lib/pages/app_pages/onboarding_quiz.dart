@@ -1,31 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Social App Onboarding',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white70),
-        ),
-      ),
-      home: const OnboardingQuiz(),
-    );
-  }
-}
+import 'package:flutter/material.dart';
 
 class OnboardingQuiz extends StatefulWidget {
   const OnboardingQuiz({Key? key}) : super(key: key);
@@ -34,8 +8,12 @@ class OnboardingQuiz extends StatefulWidget {
   _OnboardingQuizState createState() => _OnboardingQuizState();
 }
 
-class _OnboardingQuizState extends State<OnboardingQuiz> {
+class _OnboardingQuizState extends State<OnboardingQuiz>
+    with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
   int _currentPage = 0;
   final int _totalPages = 5;
 
@@ -58,17 +36,34 @@ class _OnboardingQuizState extends State<OnboardingQuiz> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+    _animationController.forward();
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   void _nextPage() {
     if (_currentPage < _totalPages - 1) {
+      _animationController.reset();
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
+      _animationController.forward();
     } else {
       // Submit data and navigate to home screen
       _submitData();
@@ -110,29 +105,54 @@ class _OnboardingQuizState extends State<OnboardingQuiz> {
                   Text(
                     'Step ${_currentPage + 1} of $_totalPages',
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF767676),
                     ),
                   ),
                   const Spacer(),
-                  Text(
-                    '${((_currentPage + 1) / _totalPages * 100).toInt()}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue,
+                  GestureDetector(
+                    onTap: () {
+                      // Skip option
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const HomeScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Skip',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFFFF5A5F),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            // Progress bar
-            LinearProgressIndicator(
-              value: (_currentPage + 1) / _totalPages,
-              backgroundColor: Colors.grey[800],
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-              minHeight: 6,
+            // Dots progress indicator
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_totalPages, (index) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 3.0),
+                    width: _currentPage == index ? 20.0 : 8.0,
+                    height: 8.0,
+                    decoration: BoxDecoration(
+                      color: _currentPage == index
+                          ? const Color(0xFFFF5A5F)
+                          : const Color(0xFFDDDDDD),
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                  );
+                }),
+              ),
             ),
+            const SizedBox(height: 20),
             // Quiz Pages
             Expanded(
               child: PageView(
@@ -159,110 +179,129 @@ class _OnboardingQuizState extends State<OnboardingQuiz> {
   }
 
   Widget _buildBirthdayPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "When's your birthday?",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    return FadeTransition(
+      opacity: _animation,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            const Text(
+              "When's your birthday?",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF484848),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(16),
+            const SizedBox(height: 12),
+            const Text(
+              "This helps us customize your experience.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF767676),
+              ),
             ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                CupertinoButton(
-                  onPressed: () async {
-                    final DateTime? picked = await showCupertinoModalPopup(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return Container(
-                          height: 300,
-                          color: Colors.grey[900],
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  CupertinoButton(
-                                    child: const Text('Cancel'),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
+            const SizedBox(height: 40),
+            GestureDetector(
+              onTap: () async {
+                final DateTime? picked = await showCupertinoModalPopup(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Container(
+                      height: 300,
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          Container(
+                            height: 50,
+                            color: Colors.grey[100],
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                CupertinoButton(
+                                  child: const Text(
+                                    'Cancel',
+                                    style: TextStyle(color: Color(0xFF767676)),
                                   ),
-                                  CupertinoButton(
-                                    child: const Text('Done'),
-                                    onPressed: () {
-                                      Navigator.of(context)
-                                          .pop(_birthday ?? DateTime.now());
-                                    },
-                                  ),
-                                ],
-                              ),
-                              Expanded(
-                                child: CupertinoDatePicker(
-                                  mode: CupertinoDatePickerMode.date,
-                                  initialDateTime: _birthday ??
-                                      DateTime.now().subtract(
-                                          const Duration(days: 365 * 20)),
-                                  maximumDate: DateTime.now(),
-                                  minimumDate: DateTime.now().subtract(
-                                      const Duration(days: 365 * 100)),
-                                  onDateTimeChanged: (DateTime newDate) {
-                                    _birthday = newDate;
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
                                   },
                                 ),
-                              ),
-                            ],
+                                CupertinoButton(
+                                  child: const Text(
+                                    'Done',
+                                    style: TextStyle(color: Color(0xFFFF5A5F)),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .pop(_birthday ?? DateTime.now());
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                        );
-                      },
+                          Expanded(
+                            child: CupertinoDatePicker(
+                              mode: CupertinoDatePickerMode.date,
+                              initialDateTime: _birthday ??
+                                  DateTime.now()
+                                      .subtract(const Duration(days: 365 * 25)),
+                              maximumDate: DateTime.now(),
+                              minimumDate: DateTime.now()
+                                  .subtract(const Duration(days: 365 * 100)),
+                              onDateTimeChanged: (DateTime newDate) {
+                                _birthday = newDate;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     );
-
-                    if (picked != null) {
-                      setState(() {
-                        _birthday = picked;
-                      });
-                    }
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _birthday != null
-                            ? '${_birthday!.month}/${_birthday!.day}/${_birthday!.year}'
-                            : 'Select Date',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                );
+
+                if (picked != null) {
+                  setState(() {
+                    _birthday = picked;
+                  });
+                }
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFDDDDDD)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _birthday != null
+                          ? '${_birthday!.month}/${_birthday!.day}/${_birthday!.year}'
+                          : 'Select your birthday',
+                      style: TextStyle(
+                        color: _birthday != null
+                            ? const Color(0xFF484848)
+                            : const Color(0xFF767676),
+                        fontSize: 16,
                       ),
                     ),
-                  ),
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      color: Color(0xFF767676),
+                      size: 20,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 40),
-          _buildNextButton(),
-        ],
+            const SizedBox(height: 60),
+            _buildNextButton(_birthday != null),
+          ],
+        ),
       ),
     );
   }
@@ -276,112 +315,159 @@ class _OnboardingQuizState extends State<OnboardingQuiz> {
       'Prefer not to say',
     ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Which best describes your gender?",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    return FadeTransition(
+      opacity: _animation,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            const Text(
+              "Which best describes your gender?",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF484848),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(16),
+            const SizedBox(height: 12),
+            const Text(
+              "Help us personalize your recommendations.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF767676),
+              ),
             ),
-            child: Column(
-              children: genderOptions.map((option) {
-                return RadioListTile<String>(
-                  title: Text(
-                    option,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+            const SizedBox(height: 40),
+            ...genderOptions.map((option) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _gender = option;
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _gender == option
+                          ? const Color(0xFFFF5A5F)
+                          : const Color(0xFFDDDDDD),
                     ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: _gender == option
+                        ? const Color(0xFFFFF8F9)
+                        : Colors.white,
                   ),
-                  value: option,
-                  groupValue: _gender,
-                  activeColor: Colors.blue,
-                  onChanged: (String? value) {
-                    setState(() {
-                      _gender = value;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 40),
-          _buildNextButton(),
-        ],
+                  child: Row(
+                    children: [
+                      Text(
+                        option,
+                        style: TextStyle(
+                          color: _gender == option
+                              ? const Color(0xFFFF5A5F)
+                              : const Color(0xFF484848),
+                          fontSize: 16,
+                          fontWeight: _gender == option
+                              ? FontWeight.w500
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_gender == option)
+                        const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFFFF5A5F),
+                          size: 20,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+            const SizedBox(height: 60),
+            _buildNextButton(_gender != null),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildActivitiesPage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "What activities do you enjoy most?",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    return FadeTransition(
+      opacity: _animation,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            const Text(
+              "What activities do you enjoy most?",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF484848),
+              ),
             ),
-          ),
-          const Text(
-            "(select up to 3)",
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white70,
+            const SizedBox(height: 12),
+            const Text(
+              "Select up to 3 activities to help us find the perfect experiences for you.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF767676),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
+            const SizedBox(height: 40),
+            Wrap(
+              spacing: 12,
+              runSpacing: 16,
               children: _activityOptions.map((activity) {
-                return CheckboxListTile(
-                  title: Text(
-                    activity,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                  value: _selectedActivities.contains(activity),
-                  activeColor: Colors.blue,
-                  checkColor: Colors.white,
-                  onChanged: (bool? value) {
+                final isSelected = _selectedActivities.contains(activity);
+                return GestureDetector(
+                  onTap: () {
                     setState(() {
-                      if (value == true) {
+                      if (isSelected) {
+                        _selectedActivities.remove(activity);
+                      } else {
                         if (_selectedActivities.length < 3) {
                           _selectedActivities.add(activity);
                         }
-                      } else {
-                        _selectedActivities.remove(activity);
                       }
                     });
                   },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color:
+                          isSelected ? const Color(0xFFFF5A5F) : Colors.white,
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFFFF5A5F)
+                            : const Color(0xFFDDDDDD),
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Text(
+                      activity,
+                      style: TextStyle(
+                        color:
+                            isSelected ? Colors.white : const Color(0xFF484848),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
                 );
               }).toList(),
             ),
-          ),
-          const SizedBox(height: 40),
-          _buildNextButton(),
-        ],
+            const SizedBox(height: 60),
+            _buildNextButton(_selectedActivities.isNotEmpty),
+          ],
+        ),
       ),
     );
   }
@@ -396,66 +482,104 @@ class _OnboardingQuizState extends State<OnboardingQuiz> {
       'Other (please specify)',
     ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Do you have any allergies or dietary preferences we should know about?",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: dietaryOptions.map((option) {
-                return RadioListTile<String>(
-                  title: Text(
-                    option,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                  value: option,
-                  groupValue: _dietaryPreference,
-                  activeColor: Colors.blue,
-                  onChanged: (String? value) {
-                    setState(() {
-                      _dietaryPreference = value;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-          if (_dietaryPreference == 'Other (please specify)')
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Please specify your dietary preferences',
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                style: const TextStyle(color: Colors.white),
+    return FadeTransition(
+      opacity: _animation,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            const Text(
+              "Any dietary preferences?",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF484848),
               ),
             ),
-          const SizedBox(height: 40),
-          _buildNextButton(),
-        ],
+            const SizedBox(height: 12),
+            const Text(
+              "This helps us recommend suitable food experiences.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF767676),
+              ),
+            ),
+            const SizedBox(height: 40),
+            ...dietaryOptions.map((option) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _dietaryPreference = option;
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _dietaryPreference == option
+                          ? const Color(0xFFFF5A5F)
+                          : const Color(0xFFDDDDDD),
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: _dietaryPreference == option
+                        ? const Color(0xFFFFF8F9)
+                        : Colors.white,
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        option,
+                        style: TextStyle(
+                          color: _dietaryPreference == option
+                              ? const Color(0xFFFF5A5F)
+                              : const Color(0xFF484848),
+                          fontSize: 16,
+                          fontWeight: _dietaryPreference == option
+                              ? FontWeight.w500
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_dietaryPreference == option)
+                        const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFFFF5A5F),
+                          size: 20,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+            if (_dietaryPreference == 'Other (please specify)')
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Please specify your dietary preferences',
+                    hintStyle: const TextStyle(color: Color(0xFF767676)),
+                    filled: true,
+                    fillColor: Colors.white,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFFF5A5F)),
+                    ),
+                  ),
+                  style: const TextStyle(color: Color(0xFF484848)),
+                ),
+              ),
+            const SizedBox(height: 60),
+            _buildNextButton(_dietaryPreference != null),
+          ],
+        ),
       ),
     );
   }
@@ -469,70 +593,113 @@ class _OnboardingQuizState extends State<OnboardingQuiz> {
       'Depends on the activity',
     ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "What's your ideal social gathering size?",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    return FadeTransition(
+      opacity: _animation,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            const Text(
+              "What's your ideal gathering size?",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF484848),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(16),
+            const SizedBox(height: 12),
+            const Text(
+              "We'll find social events that match your comfort level.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF767676),
+              ),
             ),
-            child: Column(
-              children: gatheringOptions.map((option) {
-                return RadioListTile<String>(
-                  title: Text(
-                    option,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+            const SizedBox(height: 40),
+            ...gatheringOptions.map((option) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _gatheringSize = option;
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _gatheringSize == option
+                          ? const Color(0xFFFF5A5F)
+                          : const Color(0xFFDDDDDD),
                     ),
+                    borderRadius: BorderRadius.circular(12),
+                    color: _gatheringSize == option
+                        ? const Color(0xFFFFF8F9)
+                        : Colors.white,
                   ),
-                  value: option,
-                  groupValue: _gatheringSize,
-                  activeColor: Colors.blue,
-                  onChanged: (String? value) {
-                    setState(() {
-                      _gatheringSize = value;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 40),
-          _buildNextButton(isLastPage: true),
-        ],
+                  child: Row(
+                    children: [
+                      Text(
+                        option,
+                        style: TextStyle(
+                          color: _gatheringSize == option
+                              ? const Color(0xFFFF5A5F)
+                              : const Color(0xFF484848),
+                          fontSize: 16,
+                          fontWeight: _gatheringSize == option
+                              ? FontWeight.w500
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_gatheringSize == option)
+                        const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFFFF5A5F),
+                          size: 20,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+            const SizedBox(height: 60),
+            _buildNextButton(_gatheringSize != null, isLastPage: true),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNextButton({bool isLastPage = false}) {
+  Widget _buildNextButton(bool isEnabled, {bool isLastPage = false}) {
     return GestureDetector(
-      onTap: _nextPage,
+      onTap: isEnabled ? _nextPage : null,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.blue,
-          borderRadius: BorderRadius.circular(30),
+          color: isEnabled ? const Color(0xFFFF5A5F) : const Color(0xFFDDDDDD),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFFF5A5F).withOpacity(0.3),
+                    spreadRadius: 0,
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: Text(
-            isLastPage ? 'Finish' : 'Next',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
+            isLastPage ? 'Finish' : 'Continue',
+            style: TextStyle(
+              color: isEnabled ? Colors.white : const Color(0xFF767676),
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -548,31 +715,79 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: Colors.green,
-              size: 100,
-            ),
-            SizedBox(height: 24),
-            Text(
-              'Onboarding Complete!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8F9),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                color: Color(0xFFFF5A5F),
+                size: 60,
               ),
             ),
-            SizedBox(height: 16),
-            Text(
-              'Welcome to the app',
+            const SizedBox(height: 24),
+            const Text(
+              'You\'re all set!',
               style: TextStyle(
-                fontSize: 18,
-                color: Colors.white70,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF484848),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Get ready to discover amazing experiences tailored just for you.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF767676),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: GestureDetector(
+                onTap: () {
+                  // Go to main app content
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF5A5F),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF5A5F).withOpacity(0.3),
+                        spreadRadius: 0,
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Start Exploring',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
