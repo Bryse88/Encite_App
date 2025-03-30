@@ -1,3 +1,6 @@
+import 'package:encite/components/HomeComponents/home_tools/gradient_button.dart';
+import 'package:encite/components/HomeComponents/home_tools/gradient_text.dart';
+import 'package:encite/pages/app_pages/home_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -85,7 +88,7 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
     // Navigate to home screen
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (context) => const HomeScreen(),
+        builder: (context) => const HomePage(),
       ),
     );
   }
@@ -111,24 +114,24 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                     ),
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      // Skip option
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (context) => const HomeScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFFFF5A5F),
-                      ),
-                    ),
-                  ),
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     // Skip option
+                  //     Navigator.of(context).pushReplacement(
+                  //       MaterialPageRoute(
+                  //         builder: (context) => const HomeScreen(),
+                  //       ),
+                  //     );
+                  //   },
+                  //   child: const Text(
+                  //     'Skip',
+                  //     style: TextStyle(
+                  //       fontSize: 14,
+                  //       fontWeight: FontWeight.w500,
+                  //       color: Color(0xFFFF5A5F),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -144,7 +147,8 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                     height: 8.0,
                     decoration: BoxDecoration(
                       color: _currentPage == index
-                          ? const Color(0xFFFF5A5F)
+                          //? const Color(0xFFFF5A5F)
+                          ? const Color(0xFF007AFF)
                           : const Color(0xFFDDDDDD),
                       borderRadius: BorderRadius.circular(4.0),
                     ),
@@ -229,10 +233,23 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                                     Navigator.of(context).pop();
                                   },
                                 ),
+                                // CupertinoButton(
+                                //   child: const Text(
+                                //     'Done',
+                                //     style: TextStyle(color: Color(0xFFFF5A5F)),
+                                //   ),
+                                //   onPressed: () {
+                                //     Navigator.of(context)
+                                //         .pop(_birthday ?? DateTime.now());
+                                //   },
+                                // ),
                                 CupertinoButton(
-                                  child: const Text(
+                                  child: const GradientText(
                                     'Done',
-                                    style: TextStyle(color: Color(0xFFFF5A5F)),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                   onPressed: () {
                                     Navigator.of(context)
@@ -306,6 +323,96 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
     );
   }
 
+  // Widget _buildGenderPage() {
+  //   final genderOptions = [
+  //     'Male',
+  //     'Female',
+  //     'Non-binary',
+  //     'Other',
+  //     'Prefer not to say',
+  //   ];
+
+  //   return FadeTransition(
+  //     opacity: _animation,
+  //     child: SingleChildScrollView(
+  //       padding: const EdgeInsets.symmetric(horizontal: 24.0),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           const SizedBox(height: 40),
+  //           const Text(
+  //             "Which best describes your gender?",
+  //             style: TextStyle(
+  //               fontSize: 28,
+  //               fontWeight: FontWeight.bold,
+  //               color: Color(0xFF484848),
+  //             ),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           const Text(
+  //             "Help us personalize your recommendations.",
+  //             style: TextStyle(
+  //               fontSize: 16,
+  //               color: Color(0xFF767676),
+  //             ),
+  //           ),
+  //           const SizedBox(height: 40),
+  //           ...genderOptions.map((option) {
+  //             return GestureDetector(
+  //               onTap: () {
+  //                 setState(() {
+  //                   _gender = option;
+  //                 });
+  //               },
+  //               child: Container(
+  //                 margin: const EdgeInsets.only(bottom: 12),
+  //                 padding:
+  //                     const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+  //                 decoration: BoxDecoration(
+  //                   border: Border.all(
+  //                     color: _gender == option
+  //                         ? const Color(0xFFFF5A5F)
+  //                         : const Color(0xFFDDDDDD),
+  //                   ),
+  //                   borderRadius: BorderRadius.circular(12),
+  //                   color: _gender == option
+  //                       ? const Color(0xFFFFF8F9)
+  //                       : Colors.white,
+  //                 ),
+  //                 child: Row(
+  //                   children: [
+  //                     Text(
+  //                       option,
+  //                       style: TextStyle(
+  //                         color: _gender == option
+  //                             ? const Color(0xFFFF5A5F)
+  //                             : const Color(0xFF484848),
+  //                         fontSize: 16,
+  //                         fontWeight: _gender == option
+  //                             ? FontWeight.w500
+  //                             : FontWeight.normal,
+  //                       ),
+  //                     ),
+  //                     const Spacer(),
+  //                     if (_gender == option)
+  //                       const Icon(
+  //                         Icons.check_circle,
+  //                         color: Color(0xFFFF5A5F),
+  //                         size: 20,
+  //                       ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             );
+  //           }).toList(),
+  //           const SizedBox(height: 60),
+  //           _buildNextButton(_gender != null),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildGenderPage() {
     final genderOptions = [
       'Male',
@@ -341,6 +448,7 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
             ),
             const SizedBox(height: 40),
             ...genderOptions.map((option) {
+              final isSelected = _gender == option;
               return GestureDetector(
                 onTap: () {
                   setState(() {
@@ -353,34 +461,37 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: _gender == option
-                          ? const Color(0xFFFF5A5F)
+                      color: isSelected
+                          ? const Color(0xFF007AFF)
                           : const Color(0xFFDDDDDD),
                     ),
                     borderRadius: BorderRadius.circular(12),
-                    color: _gender == option
-                        ? const Color(0xFFFFF8F9)
+                    color: isSelected
+                        ? const Color(0xFFF0F7FF) // Light blue background
                         : Colors.white,
                   ),
                   child: Row(
                     children: [
-                      Text(
-                        option,
-                        style: TextStyle(
-                          color: _gender == option
-                              ? const Color(0xFFFF5A5F)
-                              : const Color(0xFF484848),
-                          fontSize: 16,
-                          fontWeight: _gender == option
-                              ? FontWeight.w500
-                              : FontWeight.normal,
-                        ),
-                      ),
+                      isSelected
+                          ? GradientText(
+                              option,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            )
+                          : Text(
+                              option,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFF484848),
+                              ),
+                            ),
                       const Spacer(),
-                      if (_gender == option)
+                      if (isSelected)
                         const Icon(
                           Icons.check_circle,
-                          color: Color(0xFFFF5A5F),
+                          color: Color(0xFF007AFF),
                           size: 20,
                         ),
                     ],
@@ -674,125 +785,63 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
     );
   }
 
+//   Widget _buildNextButton(bool isEnabled, {bool isLastPage = false}) {
+//     return GestureDetector(
+//       onTap: isEnabled ? _nextPage : null,
+//       child: Container(
+//         width: double.infinity,
+//         padding: const EdgeInsets.symmetric(vertical: 16),
+//         decoration: BoxDecoration(
+//           color: isEnabled ? const Color(0xFFFF5A5F) : const Color(0xFFDDDDDD),
+//           borderRadius: BorderRadius.circular(12),
+//           boxShadow: isEnabled
+//               ? [
+//                   BoxShadow(
+//                     color: const Color(0xFFFF5A5F).withOpacity(0.3),
+//                     spreadRadius: 0,
+//                     blurRadius: 10,
+//                     offset: const Offset(0, 4),
+//                   ),
+//                 ]
+//               : null,
+//         ),
+//         child: Center(
+//           child: Text(
+//             isLastPage ? 'Finish' : 'Continue',
+//             style: TextStyle(
+//               color: isEnabled ? Colors.white : const Color(0xFF767676),
+//               fontSize: 16,
+//               fontWeight: FontWeight.w600,
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
   Widget _buildNextButton(bool isEnabled, {bool isLastPage = false}) {
-    return GestureDetector(
-      onTap: isEnabled ? _nextPage : null,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isEnabled ? const Color(0xFFFF5A5F) : const Color(0xFFDDDDDD),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: isEnabled
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFFF5A5F).withOpacity(0.3),
-                    spreadRadius: 0,
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            isLastPage ? 'Finish' : 'Continue',
-            style: TextStyle(
-              color: isEnabled ? Colors.white : const Color(0xFF767676),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+    return isEnabled
+        ? GradientButton(
+            onPressed: _nextPage,
+            label: isLastPage ? 'Finish' : 'Continue',
+          )
+        : Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDDDDDD),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Placeholder for the home screen after onboarding
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF8F9),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: const Icon(
-                Icons.check_circle,
-                color: Color(0xFFFF5A5F),
-                size: 60,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'You\'re all set!',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF484848),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
+            child: const Center(
               child: Text(
-                'Get ready to discover amazing experiences tailored just for you.',
-                textAlign: TextAlign.center,
+                'Continue',
                 style: TextStyle(
-                  fontSize: 16,
                   color: Color(0xFF767676),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            const SizedBox(height: 40),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: GestureDetector(
-                onTap: () {
-                  // Go to main app content
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF5A5F),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFF5A5F).withOpacity(0.3),
-                        spreadRadius: 0,
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Start Exploring',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+          );
   }
 }
