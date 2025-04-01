@@ -18,7 +18,7 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
   late Animation<double> _animation;
 
   int _currentPage = 0;
-  final int _totalPages = 5;
+  final int _totalPages = 7;
 
   // For storing user's responses
   DateTime? _birthday;
@@ -37,6 +37,8 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
     'Music & nightlife',
     'Community service',
   ];
+  Map<String, int> _locationPriorities = {};
+  int? _planningStyle; // Add to state
 
   @override
   void initState() {
@@ -173,6 +175,8 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                   _buildActivitiesPage(),
                   _buildDietaryPage(),
                   _buildGatheringSizePage(),
+                  _buildPlanningStylePage(),
+                  _buildRankingPage()
                 ],
               ),
             ),
@@ -215,62 +219,68 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                   builder: (BuildContext context) {
                     return Container(
                       height: 300,
-                      color: Colors.white,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(16)),
+                      ),
                       child: Column(
                         children: [
                           Container(
                             height: 50,
-                            color: Colors.grey[100],
+                            color: const Color(0xFFF5F5F5),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                CupertinoButton(
-                                  child: const Text(
-                                    'Cancel',
-                                    style: TextStyle(color: Color(0xFF767676)),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                                // CupertinoButton(
-                                //   child: const Text(
-                                //     'Done',
-                                //     style: TextStyle(color: Color(0xFFFF5A5F)),
-                                //   ),
-                                //   onPressed: () {
-                                //     Navigator.of(context)
-                                //         .pop(_birthday ?? DateTime.now());
-                                //   },
-                                // ),
-                                CupertinoButton(
-                                  child: const GradientText(
-                                    'Done',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  CupertinoButton(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0),
+                                    child: const Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        color: Colors.black87,
+                                        fontSize: 16,
+                                      ),
                                     ),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
                                   ),
-                                  onPressed: () {
-                                    Navigator.of(context)
-                                        .pop(_birthday ?? DateTime.now());
-                                  },
-                                ),
-                              ],
-                            ),
+                                  CupertinoButton(
+                                    child: const Text(
+                                      'Done',
+                                      style: TextStyle(color: Colors.black87),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(_birthday ?? DateTime.now());
+                                    },
+                                  ),
+                                ]),
                           ),
                           Expanded(
-                            child: CupertinoDatePicker(
-                              mode: CupertinoDatePickerMode.date,
-                              initialDateTime: _birthday ??
-                                  DateTime.now()
-                                      .subtract(const Duration(days: 365 * 25)),
-                              maximumDate: DateTime.now(),
-                              minimumDate: DateTime.now()
-                                  .subtract(const Duration(days: 365 * 100)),
-                              onDateTimeChanged: (DateTime newDate) {
-                                _birthday = newDate;
-                              },
+                            child: CupertinoTheme(
+                              data: const CupertinoThemeData(
+                                textTheme: CupertinoTextThemeData(
+                                  dateTimePickerTextStyle: TextStyle(
+                                    fontSize: 20,
+                                    color: Colors
+                                        .black, // 👈 make picker text black
+                                  ),
+                                ),
+                              ),
+                              child: CupertinoDatePicker(
+                                mode: CupertinoDatePickerMode.date,
+                                initialDateTime: _birthday ??
+                                    DateTime.now().subtract(
+                                        const Duration(days: 365 * 25)),
+                                maximumDate: DateTime.now(),
+                                minimumDate: DateTime.now()
+                                    .subtract(const Duration(days: 365 * 100)),
+                                onDateTimeChanged: (newDate) {
+                                  _birthday = newDate;
+                                },
+                              ),
                             ),
                           ),
                         ],
@@ -322,96 +332,6 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
       ),
     );
   }
-
-  // Widget _buildGenderPage() {
-  //   final genderOptions = [
-  //     'Male',
-  //     'Female',
-  //     'Non-binary',
-  //     'Other',
-  //     'Prefer not to say',
-  //   ];
-
-  //   return FadeTransition(
-  //     opacity: _animation,
-  //     child: SingleChildScrollView(
-  //       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-  //       child: Column(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           const SizedBox(height: 40),
-  //           const Text(
-  //             "Which best describes your gender?",
-  //             style: TextStyle(
-  //               fontSize: 28,
-  //               fontWeight: FontWeight.bold,
-  //               color: Color(0xFF484848),
-  //             ),
-  //           ),
-  //           const SizedBox(height: 12),
-  //           const Text(
-  //             "Help us personalize your recommendations.",
-  //             style: TextStyle(
-  //               fontSize: 16,
-  //               color: Color(0xFF767676),
-  //             ),
-  //           ),
-  //           const SizedBox(height: 40),
-  //           ...genderOptions.map((option) {
-  //             return GestureDetector(
-  //               onTap: () {
-  //                 setState(() {
-  //                   _gender = option;
-  //                 });
-  //               },
-  //               child: Container(
-  //                 margin: const EdgeInsets.only(bottom: 12),
-  //                 padding:
-  //                     const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-  //                 decoration: BoxDecoration(
-  //                   border: Border.all(
-  //                     color: _gender == option
-  //                         ? const Color(0xFFFF5A5F)
-  //                         : const Color(0xFFDDDDDD),
-  //                   ),
-  //                   borderRadius: BorderRadius.circular(12),
-  //                   color: _gender == option
-  //                       ? const Color(0xFFFFF8F9)
-  //                       : Colors.white,
-  //                 ),
-  //                 child: Row(
-  //                   children: [
-  //                     Text(
-  //                       option,
-  //                       style: TextStyle(
-  //                         color: _gender == option
-  //                             ? const Color(0xFFFF5A5F)
-  //                             : const Color(0xFF484848),
-  //                         fontSize: 16,
-  //                         fontWeight: _gender == option
-  //                             ? FontWeight.w500
-  //                             : FontWeight.normal,
-  //                       ),
-  //                     ),
-  //                     const Spacer(),
-  //                     if (_gender == option)
-  //                       const Icon(
-  //                         Icons.check_circle,
-  //                         color: Color(0xFFFF5A5F),
-  //                         size: 20,
-  //                       ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             );
-  //           }).toList(),
-  //           const SizedBox(height: 60),
-  //           _buildNextButton(_gender != null),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildGenderPage() {
     final genderOptions = [
@@ -527,10 +447,7 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
             const SizedBox(height: 12),
             const Text(
               "Select up to 3 activities to help us find the perfect experiences for you.",
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF767676),
-              ),
+              style: TextStyle(fontSize: 16, color: Color(0xFF767676)),
             ),
             const SizedBox(height: 40),
             Wrap(
@@ -543,10 +460,8 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                     setState(() {
                       if (isSelected) {
                         _selectedActivities.remove(activity);
-                      } else {
-                        if (_selectedActivities.length < 3) {
-                          _selectedActivities.add(activity);
-                        }
+                      } else if (_selectedActivities.length < 3) {
+                        _selectedActivities.add(activity);
                       }
                     });
                   },
@@ -554,11 +469,15 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color:
-                          isSelected ? const Color(0xFFFF5A5F) : Colors.white,
+                      gradient: isSelected
+                          ? const LinearGradient(
+                              colors: [Color(0xFF007AFF), Color(0xFF5AC8FA)],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.white,
                       border: Border.all(
                         color: isSelected
-                            ? const Color(0xFFFF5A5F)
+                            ? Colors.transparent
                             : const Color(0xFFDDDDDD),
                       ),
                       borderRadius: BorderRadius.circular(30),
@@ -604,21 +523,18 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
             const Text(
               "Any dietary preferences?",
               style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF484848),
-              ),
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF484848)),
             ),
             const SizedBox(height: 12),
             const Text(
               "This helps us recommend suitable food experiences.",
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF767676),
-              ),
+              style: TextStyle(fontSize: 16, color: Color(0xFF767676)),
             ),
             const SizedBox(height: 40),
             ...dietaryOptions.map((option) {
+              final isSelected = _dietaryPreference == option;
               return GestureDetector(
                 onTap: () {
                   setState(() {
@@ -630,37 +546,31 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                   padding:
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFFF0F8FF) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _dietaryPreference == option
-                          ? const Color(0xFFFF5A5F)
+                      color: isSelected
+                          ? const Color(0xFF007AFF)
                           : const Color(0xFFDDDDDD),
                     ),
-                    borderRadius: BorderRadius.circular(12),
-                    color: _dietaryPreference == option
-                        ? const Color(0xFFFFF8F9)
-                        : Colors.white,
                   ),
                   child: Row(
                     children: [
-                      Text(
-                        option,
-                        style: TextStyle(
-                          color: _dietaryPreference == option
-                              ? const Color(0xFFFF5A5F)
-                              : const Color(0xFF484848),
-                          fontSize: 16,
-                          fontWeight: _dietaryPreference == option
-                              ? FontWeight.w500
-                              : FontWeight.normal,
-                        ),
-                      ),
+                      isSelected
+                          ? GradientText(
+                              option,
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w500),
+                            )
+                          : Text(
+                              option,
+                              style: const TextStyle(
+                                  fontSize: 16, color: Color(0xFF484848)),
+                            ),
                       const Spacer(),
-                      if (_dietaryPreference == option)
-                        const Icon(
-                          Icons.check_circle,
-                          color: Color(0xFFFF5A5F),
-                          size: 20,
-                        ),
+                      if (isSelected)
+                        const Icon(Icons.check_circle,
+                            color: Color(0xFF007AFF), size: 20),
                     ],
                   ),
                 ),
@@ -681,7 +591,7 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF5A5F)),
+                      borderSide: const BorderSide(color: Color(0xFF007AFF)),
                     ),
                   ),
                   style: const TextStyle(color: Color(0xFF484848)),
@@ -715,21 +625,18 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
             const Text(
               "What's your ideal gathering size?",
               style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF484848),
-              ),
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF484848)),
             ),
             const SizedBox(height: 12),
             const Text(
               "We'll find social events that match your comfort level.",
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF767676),
-              ),
+              style: TextStyle(fontSize: 16, color: Color(0xFF767676)),
             ),
             const SizedBox(height: 40),
             ...gatheringOptions.map((option) {
+              final isSelected = _gatheringSize == option;
               return GestureDetector(
                 onTap: () {
                   setState(() {
@@ -741,84 +648,344 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                   padding:
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFFF0F8FF) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _gatheringSize == option
-                          ? const Color(0xFFFF5A5F)
+                      color: isSelected
+                          ? const Color(0xFF007AFF)
                           : const Color(0xFFDDDDDD),
                     ),
-                    borderRadius: BorderRadius.circular(12),
-                    color: _gatheringSize == option
-                        ? const Color(0xFFFFF8F9)
-                        : Colors.white,
                   ),
                   child: Row(
                     children: [
-                      Text(
-                        option,
-                        style: TextStyle(
-                          color: _gatheringSize == option
-                              ? const Color(0xFFFF5A5F)
-                              : const Color(0xFF484848),
-                          fontSize: 16,
-                          fontWeight: _gatheringSize == option
-                              ? FontWeight.w500
-                              : FontWeight.normal,
-                        ),
-                      ),
+                      isSelected
+                          ? GradientText(
+                              option,
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w500),
+                            )
+                          : Text(
+                              option,
+                              style: const TextStyle(
+                                  fontSize: 16, color: Color(0xFF484848)),
+                            ),
                       const Spacer(),
-                      if (_gatheringSize == option)
-                        const Icon(
-                          Icons.check_circle,
-                          color: Color(0xFFFF5A5F),
-                          size: 20,
-                        ),
+                      if (isSelected)
+                        const Icon(Icons.check_circle,
+                            color: Color(0xFF007AFF), size: 20),
                     ],
                   ),
                 ),
               );
             }).toList(),
             const SizedBox(height: 60),
-            _buildNextButton(_gatheringSize != null, isLastPage: true),
+            _buildNextButton(_gatheringSize != null),
           ],
         ),
       ),
     );
   }
 
-//   Widget _buildNextButton(bool isEnabled, {bool isLastPage = false}) {
-//     return GestureDetector(
-//       onTap: isEnabled ? _nextPage : null,
-//       child: Container(
-//         width: double.infinity,
-//         padding: const EdgeInsets.symmetric(vertical: 16),
-//         decoration: BoxDecoration(
-//           color: isEnabled ? const Color(0xFFFF5A5F) : const Color(0xFFDDDDDD),
-//           borderRadius: BorderRadius.circular(12),
-//           boxShadow: isEnabled
-//               ? [
-//                   BoxShadow(
-//                     color: const Color(0xFFFF5A5F).withOpacity(0.3),
-//                     spreadRadius: 0,
-//                     blurRadius: 10,
-//                     offset: const Offset(0, 4),
-//                   ),
-//                 ]
-//               : null,
-//         ),
-//         child: Center(
-//           child: Text(
-//             isLastPage ? 'Finish' : 'Continue',
-//             style: TextStyle(
-//               color: isEnabled ? Colors.white : const Color(0xFF767676),
-//               fontSize: 16,
-//               fontWeight: FontWeight.w600,
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+  Widget _buildPlanningStylePage() {
+    final timeList = [
+      'Walkable (0-15 min)',
+      'Short drive (15-30 min)',
+      'Longer travel is fine (30+ min)',
+    ];
+
+    return FadeTransition(
+      opacity: _animation,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            const Text(
+              "How far are you willing to travel for an activity?",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF484848),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              "This helps us customize your experience.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF767676),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: timeList.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final option = entry.value;
+                  final isSelected = _planningStyle == index;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _planningStyle = index;
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 20),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF007AFF)
+                              : const Color(0xFFDDDDDD),
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        color:
+                            isSelected ? const Color(0xFFF0F7FF) : Colors.white,
+                      ),
+                      child: Row(
+                        children: [
+                          isSelected
+                              ? GradientText(
+                                  option,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                )
+                              : Text(
+                                  option,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Color(0xFF484848),
+                                  ),
+                                ),
+                          const Spacer(),
+                          if (isSelected)
+                            const Icon(
+                              Icons.check_circle,
+                              color: Color(0xFF007AFF),
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 60),
+            _buildNextButton(_planningStyle != null),
+          ],
+        ),
+      ),
+    );
+  }
+
+  final List<String> _rankingFactors = [
+    'Distance / Travel Time',
+    'Cost / Budget',
+    'Food & Drink Quality',
+    'Ambience & Atmosphere',
+    'Reviews & Popularity',
+    'Unique or Specialty Offerings',
+  ];
+
+  Widget _buildRankingPage() {
+    return FadeTransition(
+      opacity: _animation,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 40),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF007AFF), Color(0xFF5AC8FA)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "What's more important",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    "when choosing a location?",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                "Rank in order of importance (1 is most important)",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
+                  color: Color(0xFF767676),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: _rankingFactors.map((factor) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.grey[200]!,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              "${_locationPriorities[factor] ?? '-'}",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: _locationPriorities[factor] != null
+                                    ? const Color(0xFF007AFF)
+                                    : Colors.grey[400],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            factor,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF484848),
+                            ),
+                          ),
+                        ),
+                        Material(
+                          color: Colors.transparent,
+                          child: PopupMenuButton<int>(
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: Color(0xFF767676),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            itemBuilder: (context) {
+                              return List.generate(6, (i) => i + 1).map((rank) {
+                                final isUsed =
+                                    _locationPriorities.containsValue(rank) &&
+                                        _locationPriorities[factor] != rank;
+                                return PopupMenuItem(
+                                  value: rank,
+                                  enabled: !isUsed,
+                                  child: Text(
+                                    '$rank',
+                                    style: TextStyle(
+                                      color: isUsed
+                                          ? Colors.grey[400]
+                                          : Colors.black,
+                                      fontWeight: isUsed
+                                          ? FontWeight.normal
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                );
+                              }).toList();
+                            },
+                            onSelected: (val) {
+                              setState(() {
+                                // Remove previous use of this rank if it exists
+                                _locationPriorities
+                                    .removeWhere((key, value) => value == val);
+                                _locationPriorities[factor] = val;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 60),
+            _buildNextButton(_locationPriorities.length == 6, isLastPage: true),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildNextButton(bool isEnabled, {bool isLastPage = false}) {
     return isEnabled
         ? GradientButton(

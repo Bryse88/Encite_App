@@ -1,6 +1,9 @@
 import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
 import 'package:encite/firebase_options.dart';
+import 'package:encite/pages/app_pages/home_page.dart';
+import 'package:encite/pages/app_pages/my_day_page.dart';
 import 'package:encite/pages/app_pages/onboarding_quiz.dart';
+import 'package:encite/pages/app_pages/scheduler.dart';
 import 'package:encite/pages/app_pages/settings_page.dart';
 import 'package:encite/pages/chat_screen.dart';
 import 'package:encite/pages/app_pages/messaging_page.dart';
@@ -45,7 +48,7 @@ class MyApp extends StatelessWidget {
         },
         '/groups': (context) => const ChatsPage(),
       },
-      home: const OnboardingQuiz(), // ← instead of just HomePage
+      home: MyDayScreen(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,
     );
   }
