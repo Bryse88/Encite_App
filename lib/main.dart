@@ -48,7 +48,6 @@ class MyApp extends StatelessWidget {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
           return ChatScreen(conversationId: args['conversationId']);
         },
-        '/groups': (context) => const ChatsPage(),
         '/recommendations': (context) => const MyDayScreen(),
         '/explore': (context) => ExplorePage(),
         '/groups': (context) => GroupsPage(),
