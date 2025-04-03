@@ -1,5 +1,6 @@
 import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
 import 'package:encite/firebase_options.dart';
+import 'package:encite/pages/app_pages/explore_page.dart';
 import 'package:encite/pages/app_pages/group_page.dart';
 import 'package:encite/pages/app_pages/home_page.dart';
 import 'package:encite/pages/app_pages/my_day_page.dart';
@@ -48,8 +49,11 @@ class MyApp extends StatelessWidget {
           return ChatScreen(conversationId: args['conversationId']);
         },
         '/groups': (context) => const ChatsPage(),
+        '/recommendations': (context) => const MyDayScreen(),
+        '/explore': (context) => ExplorePage(),
+        '/groups': (context) => GroupsPage(),
       },
-      home: GroupsPage(), // ← instead of just HomePage
+      home: HomePage(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,
     );
   }
