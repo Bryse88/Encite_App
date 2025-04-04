@@ -720,17 +720,17 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
             const SizedBox(height: 32),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
+              // decoration: BoxDecoration(
+              //   color: Colors.transparent,
+              //   borderRadius: BorderRadius.circular(20),
+              //   boxShadow: [
+              //     BoxShadow(
+              //       color: Colors.black.withOpacity(0.05),
+              //       blurRadius: 10,
+              //       spreadRadius: 1,
+              //     ),
+              //   ],
+              // ),
               child: Column(
                 children: timeList.asMap().entries.map((entry) {
                   final index = entry.key;
@@ -810,177 +810,175 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
       opacity: _animation,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 40),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF007AFF), Color(0xFF5AC8FA)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "What's more important",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Text(
-                    "when choosing a location?",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                "Rank in order of importance (1 is most important)",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                  color: Color(0xFF767676),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: _rankingFactors.map((factor) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.grey[200]!,
-                        width: 1,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // const SizedBox(height: 40),
+              Container(
+                padding: const EdgeInsets.all(16),
+                // decoration: BoxDecoration(
+                //   gradient: const LinearGradient(
+                //     colors: [Color(0xFF007AFF), Color(0xFF5AC8FA)],
+                //     begin: Alignment.topLeft,
+                //     end: Alignment.bottomRight,
+                //   ),
+                //   borderRadius: BorderRadius.circular(16),
+                //   boxShadow: [
+                //     BoxShadow(
+                //       color: Colors.black.withOpacity(0.1),
+                //       blurRadius: 10,
+                //       spreadRadius: 1,
+                //     ),
+                //   ],
+                // ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "What's more important when choosing a location?",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF484848),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              "${_locationPriorities[factor] ?? '-'}",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: _locationPriorities[factor] != null
-                                    ? const Color(0xFF007AFF)
-                                    : Colors.grey[400],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                // decoration: BoxDecoration(
+                //   color: Colors.grey[200],
+                //   borderRadius: BorderRadius.circular(12),
+                // ),
+                child: const Text(
+                  "Rank in order of importance (1 is most important)",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF767676),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(20),
+                // decoration: BoxDecoration(
+                //   color: Colors.white,
+                //   borderRadius: BorderRadius.circular(20),
+                //   boxShadow: [
+                //     BoxShadow(
+                //       color: Colors.black.withOpacity(0.05),
+                //       blurRadius: 10,
+                //       spreadRadius: 1,
+                //     ),
+                //   ],
+                // ),
+                child: Column(
+                  children: _rankingFactors.map((factor) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFB),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.grey[200]!,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFE8F0FE),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                "${_locationPriorities[factor] ?? '-'}",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: _locationPriorities[factor] != null
+                                      ? const Color(0xFF007AFF)
+                                      : Colors.grey[400],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            factor,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF484848),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              factor,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF484848),
+                              ),
                             ),
                           ),
-                        ),
-                        Material(
-                          color: Colors.transparent,
-                          child: PopupMenuButton<int>(
-                            icon: Icon(
-                              Icons.arrow_drop_down,
-                              color: Color(0xFF767676),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            itemBuilder: (context) {
-                              return List.generate(6, (i) => i + 1).map((rank) {
-                                final isUsed =
-                                    _locationPriorities.containsValue(rank) &&
-                                        _locationPriorities[factor] != rank;
-                                return PopupMenuItem(
-                                  value: rank,
-                                  enabled: !isUsed,
-                                  child: Text(
-                                    '$rank',
-                                    style: TextStyle(
-                                      color: isUsed
-                                          ? Colors.grey[400]
-                                          : Colors.black,
-                                      fontWeight: isUsed
-                                          ? FontWeight.normal
-                                          : FontWeight.w500,
+                          Material(
+                            color: Colors.transparent,
+                            child: PopupMenuButton<int>(
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: Color(0xFF767676),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              itemBuilder: (context) {
+                                return List.generate(6, (i) => i + 1)
+                                    .map((rank) {
+                                  final isUsed =
+                                      _locationPriorities.containsValue(rank) &&
+                                          _locationPriorities[factor] != rank;
+                                  return PopupMenuItem(
+                                    value: rank,
+                                    enabled: !isUsed,
+                                    child: Text(
+                                      '$rank',
+                                      style: TextStyle(
+                                        color: isUsed
+                                            ? Colors.grey[400]
+                                            : Colors.black,
+                                        fontWeight: isUsed
+                                            ? FontWeight.normal
+                                            : FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }).toList();
-                            },
-                            onSelected: (val) {
-                              setState(() {
-                                // Remove previous use of this rank if it exists
-                                _locationPriorities
-                                    .removeWhere((key, value) => value == val);
-                                _locationPriorities[factor] = val;
-                              });
-                            },
+                                  );
+                                }).toList();
+                              },
+                              onSelected: (val) {
+                                setState(() {
+                                  _locationPriorities.removeWhere(
+                                      (key, value) => value == val);
+                                  _locationPriorities[factor] = val;
+                                });
+                              },
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-            ),
-            const SizedBox(height: 60),
-            _buildNextButton(_locationPriorities.length == 6, isLastPage: true),
-          ],
+              const SizedBox(
+                  height:
+                      80), // More padding for safe space above bottom button
+              _buildNextButton(_locationPriorities.length == 6,
+                  isLastPage: true),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
