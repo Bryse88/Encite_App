@@ -5,7 +5,6 @@ import 'package:encite/pages/app_pages/group_page.dart';
 import 'package:encite/pages/app_pages/home_page.dart';
 import 'package:encite/pages/app_pages/my_day_page.dart';
 import 'package:encite/pages/app_pages/onboarding_quiz.dart';
-import 'package:encite/pages/app_pages/scheduler.dart';
 import 'package:encite/pages/app_pages/settings_page.dart';
 import 'package:encite/pages/chat_screen.dart';
 import 'package:encite/pages/app_pages/messaging_page.dart';
