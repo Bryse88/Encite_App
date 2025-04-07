@@ -9,6 +9,7 @@ import 'package:encite/pages/app_pages/settings_page.dart';
 import 'package:encite/pages/chat_screen.dart';
 import 'package:encite/pages/app_pages/messaging_page.dart';
 import 'package:encite/pages/app_pages/proflie.dart';
+import 'package:encite/pages/login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 

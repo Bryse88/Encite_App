@@ -269,31 +269,58 @@ class _GroupsPageState extends State<GroupsPage> {
 
           // Group members list
           Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: selectedGroup!.members.length +
-                  1, // +1 for the "Add Person" button
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  // Add Person button at the top
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: OutlinedButton.icon(
-                      icon: Icon(Icons.person_add),
-                      label: Text('Add Person'),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () {
-                        _showAddPersonDialog();
-                      },
-                    ),
-                  );
-                }
+            child: Stack(
+              children: [
+                ListView.builder(
+                  padding: EdgeInsets.all(16),
+                  itemCount: selectedGroup!.members.length +
+                      1, // +1 for the "Add Person" button
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      // Add Person button at the top
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: OutlinedButton.icon(
+                          icon: Icon(Icons.person_add),
+                          label: Text('Add Person'),
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () {
+                            _showAddPersonDialog();
+                          },
+                        ),
+                      );
+                    }
 
-                final member = selectedGroup!.members[index - 1];
-                return _buildMemberListItem(member);
-              },
+                    final member = selectedGroup!.members[index - 1];
+                    return _buildMemberListItem(member);
+                  },
+                ),
+
+                // Create Schedule button at the bottom
+                Positioned(
+                  bottom: 20,
+                  left: 20,
+                  right: 20,
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.calendar_today),
+                    label: Text('Create Schedule'),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () {
+                      _showCreateScheduleFlow();
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -474,6 +501,264 @@ class _GroupsPageState extends State<GroupsPage> {
               });
               Navigator.of(context).pop();
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // New Create Schedule Flow
+  void _showCreateScheduleFlow() {
+    // Start with the first question
+    _showTimeFrameDialog();
+  }
+
+  void _showTimeFrameDialog() {
+    final TextEditingController controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('Schedule Time Frame'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('What time frame would you like to schedule for your group?'),
+            SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: 'e.g., This Saturday, Next week, April 15-20',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          ElevatedButton(
+            child: Text('Next'),
+            onPressed: () {
+              final timeFrame = controller.text.trim();
+              Navigator.of(context).pop();
+              _showBudgetDialog(timeFrame);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBudgetDialog(String timeFrame) {
+    final TextEditingController controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('Budget'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('How much money do you want to spend?'),
+            SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: 'Enter amount',
+                prefixText: '\$',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: Text('Back'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showTimeFrameDialog();
+            },
+          ),
+          ElevatedButton(
+            child: Text('Next'),
+            onPressed: () {
+              final budget = controller.text.trim();
+              Navigator.of(context).pop();
+              _showLocationDialog(timeFrame, budget);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLocationDialog(String timeFrame, String budget) {
+    final TextEditingController controller = TextEditingController();
+    bool useCurrentLocation = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: Text('Location'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('What location is this in?'),
+                SizedBox(height: 16),
+                CheckboxListTile(
+                  title: Text('Use my current location'),
+                  value: useCurrentLocation,
+                  onChanged: (value) {
+                    setState(() {
+                      useCurrentLocation = value!;
+                    });
+                  },
+                  contentPadding: EdgeInsets.zero,
+                ),
+                if (!useCurrentLocation)
+                  TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      hintText: 'Enter city name',
+                      border: OutlineInputBorder(),
+                    ),
+                    enabled: !useCurrentLocation,
+                    autofocus: !useCurrentLocation,
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: Text('Back'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _showBudgetDialog(timeFrame);
+                },
+              ),
+              ElevatedButton(
+                child: Text('Next'),
+                onPressed: () {
+                  final location = useCurrentLocation
+                      ? "Current Location"
+                      : controller.text.trim();
+                  Navigator.of(context).pop();
+                  _showPreferencesDialog(timeFrame, budget, location);
+                },
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  void _showPreferencesDialog(
+      String timeFrame, String budget, String location) {
+    final TextEditingController controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('Guest Preferences'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Any other preferences from other guests to account for?'),
+            SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: 'e.g., Dietary restrictions, accessibility needs',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: Text('Back'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showLocationDialog(timeFrame, budget);
+            },
+          ),
+          ElevatedButton(
+            child: Text('Create Schedule'),
+            onPressed: () {
+              final preferences = controller.text.trim();
+              Navigator.of(context).pop();
+              _showScheduleConfirmation(
+                  timeFrame, budget, location, preferences);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showScheduleConfirmation(
+      String timeFrame, String budget, String location, String preferences) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Schedule Created!'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Your schedule has been created with the following details:'),
+            SizedBox(height: 16),
+            _buildInfoRow('Group:', selectedGroup!.name),
+            _buildInfoRow('Time Frame:', timeFrame),
+            _buildInfoRow('Budget:', '\$$budget'),
+            _buildInfoRow('Location:', location),
+            if (preferences.isNotEmpty)
+              _buildInfoRow('Preferences:', preferences),
+            SizedBox(height: 16),
+            Text('We\'ll notify all group members about this schedule.'),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            child: Text('Done'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(value),
           ),
         ],
       ),

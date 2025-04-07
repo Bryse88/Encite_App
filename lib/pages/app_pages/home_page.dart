@@ -170,46 +170,73 @@ class _HomePageState extends State<HomePage>
                     ],
                   ),
                 ),
-                const SizedBox(
-                  height: 16,
-                ),
                 Expanded(
-                  child: _loadingMenuItems
-                      ? const Center(
-                          child: CircularProgressIndicator(),
-                        )
-                      : _menuItems.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'No menu items found',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      double tileWidth = constraints.maxWidth * 0.42;
+                      double tileHeight = tileWidth * 0.9;
+
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(vertical: 60),
+                        child: Wrap(
+                          spacing: constraints.maxWidth *
+                              0.05, // space between columns
+                          runSpacing: 24, // space between rows
+                          children: List.generate(_menuItems.length, (index) {
+                            final isOffset = index % 2 != 0;
+
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                top: isOffset ? 12.0 : 0.0,
                               ),
-                            )
-                          : GridView.builder(
-                              padding: const EdgeInsets.all(16),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 1.2,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                              ),
-                              itemCount: _menuItems.length,
-                              itemBuilder: (context, index) {
-                                return AppIconButton(
+                              child: SizedBox(
+                                width: tileWidth,
+                                height: tileHeight,
+                                child: AppIconButton(
                                   item: _menuItems[index],
                                   index: index,
-                                );
-                              },
-                            ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(int index,
+      {required double top, required double left}) {
+    if (index >= _menuItems.length) return const SizedBox();
+    return Positioned(
+      top: top,
+      left: left,
+      child: SizedBox(
+        width: 120,
+        height: 120,
+        child: AppIconButton(
+          item: _menuItems[index],
+          index: index,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTile(int index) {
+    if (index >= _menuItems.length) return const SizedBox();
+    return SizedBox(
+      width: 140,
+      height: 140,
+      child: AppIconButton(
+        item: _menuItems[index],
+        index: index,
       ),
     );
   }
