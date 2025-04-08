@@ -1,4 +1,4 @@
-import 'package:encite/components/LoginComponents/auth/SocialAuthButtons.dart';
+import 'package:encite/components/LoginComponents/SocialAuthButtons.dart';
 import 'package:encite/components/LoginComponents/impaler_bar.dart';
 import 'package:encite/components/LoginComponents/logo_with_name.dart';
 import 'package:encite/components/LoginComponents/social_login_options.dart';
