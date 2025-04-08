@@ -59,10 +59,15 @@ class _LoginSignupPageState extends State<LoginSignupPage>
                 child: Column(
                   children: [
                     SizedBox(height: height * 0.1),
-                    LogoWithName(animationValue: _animationController.value),
-                    const SizedBox(height: 20),
+                    Center(
+                      child: Text(
+                        'encite',
+                        style: Theme.of(context).textTheme.displayLarge,
+                      ),
+                    ),
+                    SizedBox(height: height * 0.03),
                     Text(
-                      "Smarter schedules. Stronger socials.",
+                      "Mediating your social planning",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.6),
@@ -70,7 +75,7 @@ class _LoginSignupPageState extends State<LoginSignupPage>
                         fontWeight: FontWeight.w300,
                       ),
                     ),
-                    SizedBox(height: height * 0.15),
+                    SizedBox(height: height * 0.3),
                     const SocialAuthButtons(),
                     const SizedBox(height: 16),
                     const SocialLoginOptions(),
