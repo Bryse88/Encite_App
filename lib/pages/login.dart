@@ -1,11 +1,8 @@
-import 'dart:ui';
-import 'package:encite/components/MainComponents/background_painter.dart';
 import 'package:encite/components/LoginComponents/auth/SocialAuthButtons.dart';
-import 'package:encite/components/LoginComponents/AuthenticationServices/auth_form.dart';
 import 'package:encite/components/LoginComponents/impaler_bar.dart';
 import 'package:encite/components/LoginComponents/logo_with_name.dart';
 import 'package:encite/components/LoginComponents/social_login_options.dart';
-import 'package:encite/pages/app_pages/proflie.dart';
+import 'package:encite/components/MainComponents/background_painter.dart';
 import 'package:flutter/material.dart';
 
 class LoginSignupPage extends StatefulWidget {
@@ -39,10 +36,13 @@ class _LoginSignupPageState extends State<LoginSignupPage>
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // animated background
           AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) => CustomPaint(
@@ -50,13 +50,15 @@ class _LoginSignupPageState extends State<LoginSignupPage>
               size: MediaQuery.of(context).size,
             ),
           ),
+
+          // main UI content
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    SizedBox(height: height * 0.1),
                     LogoWithName(animationValue: _animationController.value),
                     const SizedBox(height: 20),
                     Text(
@@ -68,42 +70,18 @@ class _LoginSignupPageState extends State<LoginSignupPage>
                         fontWeight: FontWeight.w300,
                       ),
                     ),
-                    const SizedBox(height: 60),
-                    AuthForm(isLogin: _isLogin),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _isLogin
-                              ? "Don't have an account?"
-                              : "Already have an account?",
-                          style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 14),
-                        ),
-                        TextButton(
-                          onPressed: _toggleAuthMode,
-                          child: Text(
-                            _isLogin ? "Create one" : "Sign in",
-                            style: const TextStyle(
-                              color: Color(0xFF007AFF),
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: height * 0.15),
                     const SocialAuthButtons(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     const SocialLoginOptions(),
+                    const SizedBox(height: 120), // so it's above the bar
                   ],
                 ),
               ),
             ),
           ),
+
+          // floating impaler bar
           const Positioned(
             bottom: 70,
             left: 24,

@@ -6,6 +6,7 @@ import 'package:encite/pages/app_pages/home_page.dart';
 import 'package:encite/pages/app_pages/my_day_page.dart';
 import 'package:encite/pages/app_pages/onboarding_quiz.dart';
 import 'package:encite/pages/app_pages/settings_page.dart';
+import 'package:encite/pages/app_pages/welcome_screen.dart';
 import 'package:encite/pages/chat_screen.dart';
 import 'package:encite/pages/app_pages/messaging_page.dart';
 import 'package:encite/pages/app_pages/proflie.dart';
@@ -52,7 +53,7 @@ class MyApp extends StatelessWidget {
         '/explore': (context) => ExplorePage(),
         '/groups': (context) => GroupsPage(),
       },
-      home: HomePage(), // ← instead of just HomePage
+      home: WelcomeScreen(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,
     );
   }

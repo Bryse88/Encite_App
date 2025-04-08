@@ -5,6 +5,7 @@ import 'package:encite/components/HomeComponents/home_menu_item.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -29,8 +30,19 @@ class _HomePageState extends State<HomePage>
       vsync: this,
     )..repeat(reverse: true);
 
-    // Fetch user's display name when the page initializes
-    _fetchUserName();
+    // Preload preferences to avoid delay in first build
+    SharedPreferences.getInstance().then((prefs) {
+      final cached = prefs.getString('cachedName');
+      if (cached != null && mounted) {
+        setState(() {
+          _firstName = cached;
+          _isLoading = false;
+        });
+      }
+    });
+
+// Then let the actual Firestore call run in background
+    _fetchUserName(); // It'll update if newer data exists
 
     // Fetch menu items from Firestore
     _fetchMenuItems();
@@ -38,39 +50,45 @@ class _HomePageState extends State<HomePage>
 
   Future<void> _fetchUserName() async {
     try {
-      // Get current user
+      final prefs = await SharedPreferences.getInstance();
+      final cachedName = prefs.getString('cachedName');
+
+      if (cachedName != null && cachedName.isNotEmpty) {
+        // Load from local storage immediately
+        setState(() {
+          _firstName = cachedName;
+          _isLoading = false;
+        });
+        return;
+      }
+
       final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() {
+          _firstName = 'there';
+          _isLoading = false;
+        });
+        return;
+      }
 
-      if (user != null) {
-        // Fetch user document from Firestore
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+      // Fetch from Firestore if no cache exists
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
 
-        if (userDoc.exists && userDoc.data() != null) {
-          final data = userDoc.data()!;
-          if (data.containsKey('name')) {
-            // Get the first word from DisplayName
-            final fullName = data['name'] as String;
-            final firstName = fullName.split(' ')[0];
+      if (userDoc.exists && userDoc.data() != null) {
+        final data = userDoc.data()!;
+        final fullName = data['name'] as String? ?? 'there';
+        final firstName = fullName.split(' ')[0];
 
-            setState(() {
-              _firstName = firstName;
-              _isLoading = false;
-            });
-          } else {
-            setState(() {
-              _firstName = 'there';
-              _isLoading = false;
-            });
-          }
-        } else {
-          setState(() {
-            _firstName = 'there';
-            _isLoading = false;
-          });
-        }
+        // Cache it for future loads
+        await prefs.setString('cachedName', firstName);
+
+        setState(() {
+          _firstName = firstName;
+          _isLoading = false;
+        });
       } else {
         setState(() {
           _firstName = 'there';
@@ -78,7 +96,7 @@ class _HomePageState extends State<HomePage>
         });
       }
     } catch (e) {
-      print('Error fetching user name: $e');
+      print('Error fetching name: $e');
       setState(() {
         _firstName = 'there';
         _isLoading = false;

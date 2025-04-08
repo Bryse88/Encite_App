@@ -191,14 +191,6 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
 
     return Column(
       children: [
-        const Text(
-          "or sign in with",
-          style: TextStyle(
-            color: Colors.white54,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 16),
         if (Platform.isIOS)
           _buildButton(
             context,
