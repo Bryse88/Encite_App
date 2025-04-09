@@ -1,6 +1,6 @@
 import 'package:encite/components/HomeComponents/home_tools/gradient_button.dart';
 import 'package:encite/components/HomeComponents/home_tools/gradient_text.dart';
-import 'package:encite/pages/app_pages/home_page.dart';
+import 'package:encite/pages/home_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -16,6 +16,7 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
   final PageController _pageController = PageController();
   late AnimationController _animationController;
   late Animation<double> _animation;
+  final List<int> _requiredPages = [0, 1, 2, 4, 6]; // Indices of required pages
 
   int _currentPage = 0;
   final int _totalPages = 7;
@@ -39,7 +40,7 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
   ];
   Map<String, int> _locationPriorities = {};
   int? _planningStyle; // Add to state
-
+  Set<String> _selectedVibes = {};
   @override
   void initState() {
     super.initState();
@@ -171,10 +172,10 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                 },
                 children: [
                   _buildBirthdayPage(),
-                  _buildGenderPage(),
+                  _buildVibesPage(),
                   _buildActivitiesPage(),
                   _buildDietaryPage(),
-                  _buildGatheringSizePage(),
+                  _buildDensityOfSchedulePage(),
                   _buildPlanningStylePage(),
                   _buildRankingPage()
                 ],
@@ -333,98 +334,103 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
     );
   }
 
-  Widget _buildGenderPage() {
-    final genderOptions = [
-      'Male',
-      'Female',
-      'Non-binary',
-      'Other',
-      'Prefer not to say',
+  Widget _buildVibesPage() {
+    final vibeOptions = [
+      'Chill & Relaxed',
+      'High Energy Party',
+      'Intimate Gatherings',
+      'Intellectual & Cultural',
+      'Adventure & Outdoors',
+      'Food & Culinary',
+      'Creative & Artistic',
     ];
 
     return FadeTransition(
-      opacity: _animation,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 40),
-            const Text(
-              "Which best describes your gender?",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF484848),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "Help us personalize your recommendations.",
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF767676),
-              ),
-            ),
-            const SizedBox(height: 40),
-            ...genderOptions.map((option) {
-              final isSelected = _gender == option;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _gender = option;
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF007AFF)
-                          : const Color(0xFFDDDDDD),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    color: isSelected
-                        ? const Color(0xFFF0F7FF) // Light blue background
-                        : Colors.white,
-                  ),
-                  child: Row(
-                    children: [
-                      isSelected
-                          ? GradientText(
-                              option,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            )
-                          : Text(
-                              option,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Color(0xFF484848),
-                              ),
-                            ),
-                      const Spacer(),
-                      if (isSelected)
-                        const Icon(
-                          Icons.check_circle,
-                          color: Color(0xFF007AFF),
-                          size: 20,
-                        ),
-                    ],
-                  ),
+        opacity: _animation,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              const Text(
+                "What kind of experiences are you usually looking for?",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF484848),
                 ),
-              );
-            }).toList(),
-            const SizedBox(height: 60),
-            _buildNextButton(_gender != null),
-          ],
-        ),
-      ),
-    );
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Select vibes that match your social preferences.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF767676),
+                ),
+              ),
+              const SizedBox(height: 40),
+              ...vibeOptions.map((option) {
+                final isSelected = _selectedVibes.contains(option);
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedVibes.remove(option);
+                      } else {
+                        _selectedVibes.add(option);
+                      }
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 20),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF007AFF)
+                            : const Color(0xFFDDDDDD),
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      color: isSelected
+                          ? const Color(0xFFF0F7FF) // Light blue background
+                          : Colors.white,
+                    ),
+                    child: Row(
+                      children: [
+                        isSelected
+                            ? GradientText(
+                                option,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              )
+                            : Text(
+                                option,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF484848),
+                                ),
+                              ),
+                        const Spacer(),
+                        if (isSelected)
+                          const Icon(
+                            Icons.check_circle,
+                            color: Color(0xFF007AFF),
+                            size: 20,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+              const SizedBox(height: 60),
+              _buildNextButton(_selectedVibes.isNotEmpty),
+            ],
+          ),
+        ));
   }
 
   Widget _buildActivitiesPage() {
@@ -605,15 +611,8 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
     );
   }
 
-  Widget _buildGatheringSizePage() {
-    final gatheringOptions = [
-      'Just me and one other person',
-      'Small group (3-5 people)',
-      'Medium group (6-15 people)',
-      'Large events (15+ people)',
-      'Depends on the activity',
-    ];
-
+  int? _activityLevel;
+  Widget _buildDensityOfSchedulePage() {
     return FadeTransition(
       opacity: _animation,
       child: SingleChildScrollView(
@@ -623,7 +622,7 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
           children: [
             const SizedBox(height: 40),
             const Text(
-              "What's your ideal gathering size?",
+              "How busy do you enjoy being when going out?",
               style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -631,59 +630,106 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
             ),
             const SizedBox(height: 12),
             const Text(
-              "We'll find social events that match your comfort level.",
+              "1 = very relaxed, 5 = packed with things to do",
               style: TextStyle(fontSize: 16, color: Color(0xFF767676)),
             ),
             const SizedBox(height: 40),
-            ...gatheringOptions.map((option) {
-              final isSelected = _gatheringSize == option;
-              return GestureDetector(
-                onTap: () {
+
+            // Slider value indicator
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(5, (index) {
+                  return Text(
+                    (index + 1).toString(),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: _activityLevel == index + 1
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: _activityLevel == index + 1
+                          ? const Color(0xFF007AFF)
+                          : const Color(0xFF767676),
+                    ),
+                  );
+                }),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // The slider
+            SliderTheme(
+              data: SliderThemeData(
+                activeTrackColor: const Color(0xFF007AFF),
+                inactiveTrackColor: const Color(0xFFDDDDDD),
+                thumbColor: Colors.white,
+                overlayColor: const Color(0x29007AFF),
+                thumbShape: const RoundSliderThumbShape(
+                  enabledThumbRadius: 14,
+                  elevation: 4,
+                ),
+                trackHeight: 6.0,
+              ),
+              child: Slider(
+                min: 1,
+                max: 5,
+                divisions: 4,
+                value: _activityLevel?.toDouble() ?? 3.0,
+                onChanged: (value) {
                   setState(() {
-                    _gatheringSize = option;
+                    _activityLevel = value.round();
                   });
                 },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFF0F8FF) : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF007AFF)
-                          : const Color(0xFFDDDDDD),
-                    ),
+              ),
+            ),
+
+            // Selected value description
+            Container(
+              margin: const EdgeInsets.only(top: 24, bottom: 60),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F8FF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF007AFF)),
+              ),
+              child: Row(
+                children: [
+                  GradientText(
+                    _getActivityDescription(_activityLevel),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w500),
                   ),
-                  child: Row(
-                    children: [
-                      isSelected
-                          ? GradientText(
-                              option,
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w500),
-                            )
-                          : Text(
-                              option,
-                              style: const TextStyle(
-                                  fontSize: 16, color: Color(0xFF484848)),
-                            ),
-                      const Spacer(),
-                      if (isSelected)
-                        const Icon(Icons.check_circle,
-                            color: Color(0xFF007AFF), size: 20),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-            const SizedBox(height: 60),
-            _buildNextButton(_gatheringSize != null),
+                ],
+              ),
+            ),
+
+            _buildNextButton(_activityLevel != null),
           ],
         ),
       ),
     );
+  }
+
+// Helper function to get description based on activity level
+  String _getActivityDescription(int? level) {
+    if (level == null) return "Choose your preference";
+
+    switch (level) {
+      case 1:
+        return "Very relaxed pace";
+      case 2:
+        return "Casual with some free time";
+      case 3:
+        return "Balanced schedule";
+      case 4:
+        return "Fairly active schedule";
+      case 5:
+        return "Packed with activities";
+      default:
+        return "Choose your preference";
+    }
   }
 
   Widget _buildPlanningStylePage() {
@@ -945,9 +991,8 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                                     child: Text(
                                       '$rank',
                                       style: TextStyle(
-                                        color: isUsed
-                                            ? Colors.grey[400]
-                                            : Colors.black,
+                                        color:
+                                            isUsed ? Colors.white : Colors.grey,
                                         fontWeight: isUsed
                                             ? FontWeight.normal
                                             : FontWeight.w500,

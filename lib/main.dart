@@ -1,15 +1,15 @@
 import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
 import 'package:encite/firebase_options.dart';
-import 'package:encite/pages/app_pages/explore_page.dart';
-import 'package:encite/pages/app_pages/group_page.dart';
-import 'package:encite/pages/app_pages/home_page.dart';
-import 'package:encite/pages/app_pages/my_day_page.dart';
-import 'package:encite/pages/app_pages/onboarding_quiz.dart';
-import 'package:encite/pages/app_pages/settings_page.dart';
-import 'package:encite/pages/app_pages/welcome_screen.dart';
+import 'package:encite/pages/explore_page.dart';
+import 'package:encite/pages/group_page.dart';
+import 'package:encite/pages/home_page.dart';
+import 'package:encite/pages/my_day_page.dart';
+import 'package:encite/pages/onboarding_quiz.dart';
+import 'package:encite/pages/settings_page.dart';
+import 'package:encite/pages/welcome_screen.dart';
 import 'package:encite/pages/chat_screen.dart';
-import 'package:encite/pages/app_pages/messaging_page.dart';
-import 'package:encite/pages/app_pages/proflie.dart';
+import 'package:encite/pages/messaging_page.dart';
+import 'package:encite/pages/proflie.dart';
 import 'package:encite/pages/login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
         '/explore': (context) => ExplorePage(),
         '/groups': (context) => GroupsPage(),
       },
-      home: WelcomeScreen(), // ← instead of just HomePage
+      home: OnboardingQuiz(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,
     );
   }

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:encite/pages/app_navigator.dart';
-import 'package:encite/pages/app_pages/home_page.dart';
+import 'package:encite/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';

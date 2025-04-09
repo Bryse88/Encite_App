@@ -1,6 +1,6 @@
 import 'package:encite/components/LoginComponents/AuthenticationServices/auth_services.dart';
 import 'package:encite/pages/app_navigator.dart';
-import 'package:encite/pages/app_pages/home_page.dart';
+import 'package:encite/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:encite/pages/login.dart';
