@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encite/components/HomeComponents/home_tools/gradient_button.dart';
 import 'package:encite/components/HomeComponents/home_tools/gradient_text.dart';
 import 'package:encite/pages/home_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -16,7 +18,15 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
   final PageController _pageController = PageController();
   late AnimationController _animationController;
   late Animation<double> _animation;
-  final List<int> _requiredPages = [0, 1, 2, 4, 6]; // Indices of required pages
+  final List<int> _requiredPages = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ]; // Indices of required pages
 
   int _currentPage = 0;
   final int _totalPages = 7;
@@ -76,24 +86,35 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
     }
   }
 
-  void _submitData() {
-    // Here you would typically send this data to your backend
-    final userData = {
-      'birthday': _birthday,
-      'gender': _gender,
+  void _submitData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final onboardingData = {
+      'birthday': _birthday?.toIso8601String(),
+      'vibes': _selectedVibes.toList(),
       'activities': _selectedActivities,
       'dietaryPreference': _dietaryPreference,
-      'gatheringSize': _gatheringSize,
+      'scheduleDensity': _activityLevel,
+      'planningStyle': _planningStyle,
+      'locationPriorities': _locationPriorities,
+      'completedAt': Timestamp.now(),
     };
 
-    print('User onboarding data: $userData');
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('onboarding')
+          .doc('main')
+          .set(onboardingData);
 
-    // Navigate to home screen
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const HomePage(),
-      ),
-    );
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } catch (e) {
+      print("Error saving onboarding: $e");
+    }
   }
 
   @override
