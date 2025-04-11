@@ -1,4 +1,5 @@
 import 'package:encite/components/LoginComponents/SocialAuthButtons.dart';
+import 'package:encite/components/LoginComponents/gradient_background.dart';
 import 'package:encite/components/LoginComponents/impaler_bar.dart';
 import 'package:encite/components/LoginComponents/logo_with_name.dart';
 import 'package:encite/components/LoginComponents/social_login_options.dart';
@@ -38,18 +39,19 @@ class _LoginSignupPageState extends State<LoginSignupPage>
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
+    return GradientBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           // animated background
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) => CustomPaint(
-              painter: BackgroundPainter(_animationController.value),
-              size: MediaQuery.of(context).size,
-            ),
-          ),
+          // AnimatedBuilder(
+          //   animation: _animationController,
+          //   builder: (context, child) => CustomPaint(
+          //     painter: BackgroundPainter(_animationController.value),
+          //     size: MediaQuery.of(context).size,
+          //   ),
+          // ),
 
           // main UI content
           SafeArea(
@@ -95,6 +97,6 @@ class _LoginSignupPageState extends State<LoginSignupPage>
           ),
         ],
       ),
-    );
+    ));
   }
 }

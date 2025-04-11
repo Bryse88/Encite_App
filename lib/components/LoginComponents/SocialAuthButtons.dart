@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:encite/pages/app_navigator.dart';
 import 'package:encite/pages/home_page.dart';
+import 'package:encite/pages/onboarding_quiz.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -141,11 +141,42 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
     }
   }
 
+  Future<bool> _isOnboardingComplete(String uid) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('onboarding')
+        .doc('main')
+        .get();
+
+    return doc.exists;
+  }
+
 // Update the _navigateToHome method for better navigation
-  void _navigateToHome() {
-    // Use pushReplacement instead of push to prevent going back to login
-    Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => NavigationPage()));
+  void _navigateToHome() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final onboardingComplete = await _isOnboardingComplete(user.uid);
+
+    if (mounted) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('sessionLogs')
+          .add({
+        'type': 'login',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => onboardingComplete
+              ? const HomePage() // home page with tabs
+              : const OnboardingQuiz(), // quiz flow
+        ),
+      );
+    }
   }
 
   // Get a more user-friendly error message

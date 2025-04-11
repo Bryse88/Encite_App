@@ -35,7 +35,7 @@ class _GroupsPageState extends State<GroupsPage> {
   List<Group> groups = [
     Group(
       id: 1,
-      name: 'Marketing Team',
+      name: 'Brunch Club',
       members: [
         GroupMember(
             id: 1,
@@ -61,7 +61,7 @@ class _GroupsPageState extends State<GroupsPage> {
     ),
     Group(
       id: 2,
-      name: 'Design Sprint',
+      name: 'Hometown Friends',
       members: [
         GroupMember(
             id: 1,
@@ -79,7 +79,7 @@ class _GroupsPageState extends State<GroupsPage> {
     ),
     Group(
       id: 3,
-      name: 'Project X',
+      name: 'Work Friends',
       members: [
         GroupMember(
             id: 8,
@@ -101,16 +101,12 @@ class _GroupsPageState extends State<GroupsPage> {
     ),
     Group(
       id: 4,
-      name: 'Book Club',
+      name: 'Date Night',
       members: [
         GroupMember(
             id: 12,
             name: 'Mei Lin',
             avatarUrl: 'https://i.pravatar.cc/150?img=12'),
-        GroupMember(
-            id: 13,
-            name: 'Jordan Smith',
-            avatarUrl: 'https://i.pravatar.cc/150?img=13'),
       ],
     ),
   ];
@@ -155,31 +151,74 @@ class _GroupsPageState extends State<GroupsPage> {
           selectedGroup = group;
         });
       },
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                group.name,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 8),
-              Expanded(
-                child: _buildMemberGrid(group.members),
-              ),
-            ],
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [Color(0xFF1C1C1E), Color(0xFF2C2C2E)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Group Name and Count
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    group.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${group.members.length} members',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Member Avatars
+            // Member Avatars (wrapped)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: group.members.take(9).map((member) {
+                return CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(member.avatarUrl),
+                  backgroundColor: Colors.grey[200],
+                );
+              }).toList(),
+            ),
+          ],
         ),
       ),
     );

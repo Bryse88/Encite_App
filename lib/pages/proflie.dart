@@ -7,6 +7,7 @@ import 'package:encite/components/ProfileComponents/Widgets/logout_button.dart';
 import 'package:encite/components/ProfileComponents/Widgets/nav_bar_item.dart';
 import 'package:encite/components/ProfileComponents/Widgets/profile_header.dart';
 import 'package:encite/components/ProfileComponents/recent_activity.dart';
+import 'package:encite/components/ProfileComponents/utils/tag_generator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -68,20 +69,33 @@ class _ProfilePageState extends State<ProfilePage>
   Future<void> fetchUserData() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      // Example: fetch user with ID 'alex_morgan'
-      if (user != null) {
-        // Fetch user document from Firestore
-        DocumentSnapshot doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+      if (user == null) return;
 
-        if (doc.exists) {
-          setState(() {
-            userData = doc.data() as Map<String, dynamic>;
-          });
-        }
-      }
+      final uid = user.uid; // ✅ Keep this for reuse
+
+      // Fetch base user doc
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      // Fetch onboarding subcollection
+      final onboardingDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('onboarding')
+          .doc('identityTags')
+          .get();
+
+      final identityTags = onboardingDoc.exists
+          ? List<String>.from(onboardingDoc.data()?['tags'] ?? [])
+          : <String>[];
+
+      setState(() {
+        userData = {
+          'uid': uid,
+          ...?userDoc.data() as Map<String, dynamic>?,
+          'identityTags': identityTags,
+        };
+      });
     } catch (e) {
       print('Error fetching user data: $e');
     }
@@ -153,10 +167,10 @@ class _ProfilePageState extends State<ProfilePage>
                       const SizedBox(height: 20),
                       buildImpalerBar(),
                       const SizedBox(height: 20),
-                      buildFavoriteCategories(userData1),
+                      buildIdentityTags(userData!),
                       const SizedBox(height: 24),
                       Expanded(child: buildRecentActivity(userData1)),
-                      buildLogoutButton(),
+                      buildLogoutButton(context),
                     ],
                   ),
                 ),

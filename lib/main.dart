@@ -5,6 +5,7 @@ import 'package:encite/pages/group_page.dart';
 import 'package:encite/pages/home_page.dart';
 import 'package:encite/pages/my_day_page.dart';
 import 'package:encite/pages/onboarding_quiz.dart';
+import 'package:encite/pages/scheduler.dart';
 import 'package:encite/pages/settings_page.dart';
 import 'package:encite/pages/welcome_screen.dart';
 import 'package:encite/pages/chat_screen.dart';
@@ -50,10 +51,10 @@ class MyApp extends StatelessWidget {
           return ChatScreen(conversationId: args['conversationId']);
         },
         '/recommendations': (context) => const MyDayScreen(),
-        '/explore': (context) => ExplorePage(),
+        '/explore': (context) => const ExplorePage(),
         '/groups': (context) => GroupsPage(),
       },
-      home: OnboardingQuiz(), // ← instead of just HomePage
+      home: AuthWrapper(), // ← instead of just HomePage
       debugShowCheckedModeBanner: false,
     );
   }

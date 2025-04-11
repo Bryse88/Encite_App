@@ -1,14 +1,17 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-Widget buildFavoriteCategories(Map<String, dynamic> userData) {
+Widget buildIdentityTags(Map<String, dynamic> userData) {
+  final List<dynamic>? tags = userData['identityTags'];
+  if (tags == null || tags.isEmpty) return const SizedBox.shrink();
+
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Text(
-          'Favorite Categories',
+          'Your Vibe',
           style: TextStyle(
             color: Colors.white.withOpacity(0.9),
             fontSize: 16,
@@ -22,10 +25,10 @@ Widget buildFavoriteCategories(Map<String, dynamic> userData) {
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: userData['favoriteCategories'].length,
+          itemCount: tags.length,
           itemBuilder: (context, index) {
-            final category = userData['favoriteCategories'][index];
-            return buildCategoryChip(category, index);
+            final tag = tags[index];
+            return buildCategoryChip(tag, index);
           },
         ),
       ),

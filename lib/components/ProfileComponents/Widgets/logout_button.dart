@@ -1,11 +1,34 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-Widget buildLogoutButton() {
+Future<void> signUserOut() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('sessionLogs')
+        .add({
+      'type': 'logout',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  await FirebaseAuth.instance.signOut();
+}
+
+Widget buildLogoutButton(BuildContext context) {
   return Padding(
     padding: const EdgeInsets.all(24.0),
     child: GestureDetector(
-      onTap: () {
-        // Logout logic
+      onTap: () async {
+        await signUserOut();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AuthWrapper()),
+        );
       },
       child: AnimatedScale(
         duration: const Duration(milliseconds: 200),

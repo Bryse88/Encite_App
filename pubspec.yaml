@@ -30,6 +30,7 @@ dev_dependencies:
   device_info_plus: ^11.3.3
   firebase_storage: ^12.4.4
   package_info_plus: ^8.3.0
+  google_fonts: ^6.2.1
 flutter:
   uses-material-design: true
 

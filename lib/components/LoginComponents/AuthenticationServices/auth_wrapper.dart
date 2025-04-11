@@ -1,9 +1,9 @@
 import 'package:encite/components/LoginComponents/AuthenticationServices/auth_services.dart';
 import 'package:encite/pages/app_navigator.dart';
 import 'package:encite/pages/home_page.dart';
+import 'package:encite/pages/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:encite/pages/login.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({Key? key}) : super(key: key);
@@ -18,10 +18,14 @@ class AuthWrapper extends StatelessWidget {
           User? user = snapshot.data;
           if (user == null) {
             // User is not logged in, go to Login page
-            return const LoginSignupPage();
+            print('🔑 User not logged in');
+
+            return const WelcomeScreen();
           } else {
             // User is logged in, go to Navigation page
-            return HomePage();
+            print('✅ User is logged in: ${user.email}');
+
+            return const HomePage();
           }
         }
 

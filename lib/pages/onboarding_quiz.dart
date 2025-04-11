@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encite/components/HomeComponents/home_tools/gradient_button.dart';
 import 'package:encite/components/HomeComponents/home_tools/gradient_text.dart';
+import 'package:encite/components/ProfileComponents/utils/tag_generator.dart';
 import 'package:encite/pages/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -33,20 +34,19 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
 
   // For storing user's responses
   DateTime? _birthday;
-  String? _gender;
   List<String> _selectedActivities = [];
   String? _dietaryPreference;
   String? _gatheringSize;
 
   final List<String> _activityOptions = [
-    'Outdoor adventures',
-    'Food & dining',
-    'Arts & culture',
-    'Sports & fitness',
-    'Tech & gaming',
-    'Learning & workshops',
-    'Music & nightlife',
-    'Community service',
+    'Try new restaurants / cafes',
+    'Explore nature or go hiking',
+    'Go to live events',
+    'Attend classes or workshops',
+    'Hosting or joining game/movie nights',
+    'Play sports or working out',
+    'Attending workshops or creative classes',
+    'Volunteering or joining community events',
   ];
   Map<String, int> _locationPriorities = {};
   int? _planningStyle; // Add to state
@@ -101,6 +101,13 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
       'completedAt': Timestamp.now(),
     };
 
+    final identityTags = generateIdentityTags(
+      activities: _selectedActivities,
+      vibes: _selectedVibes,
+      scheduleDensity: _activityLevel,
+      planningStyle: _planningStyle,
+    );
+
     try {
       await FirebaseFirestore.instance
           .collection('users')
@@ -108,6 +115,16 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
           .collection('onboarding')
           .doc('main')
           .set(onboardingData);
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('onboarding')
+          .doc('identityTags')
+          .set({
+        'tags': identityTags,
+        'updatedAt': Timestamp.now(),
+      }, SetOptions(merge: true));
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const HomePage()),
@@ -357,13 +374,13 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
 
   Widget _buildVibesPage() {
     final vibeOptions = [
-      'Chill & Relaxed',
-      'High Energy Party',
-      'Intimate Gatherings',
-      'Intellectual & Cultural',
-      'Adventure & Outdoors',
-      'Food & Culinary',
-      'Creative & Artistic',
+      'Chill & Laid-back',
+      'Social & Outgoing',
+      'Focused and Prodcutive',
+      'Intimate',
+      'Adventurous',
+      'Artisitc & Creative',
+      'Loud & Energetic',
     ];
 
     return FadeTransition(

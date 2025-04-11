@@ -1,3 +1,4 @@
+import 'package:encite/pages/group_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -20,29 +21,29 @@ class _MyDayScreenState extends State<MyDayScreen> {
 
   final List<Map<String, dynamic>> _availableFriends = [
     {
-      'name': 'Alex Kim',
-      'avatar': 'assets/avatars/alex.png',
-      'status': 'Online'
+      'name': 'Alex Johnson',
+      'avatar': 'https://i.pravatar.cc/150?img=1',
+      'status': 'Online',
     },
     {
-      'name': 'Taylor Swift',
-      'avatar': 'assets/avatars/taylor.png',
-      'status': 'Away'
+      'name': 'Sarah Williams',
+      'avatar': 'https://i.pravatar.cc/150?img=2',
+      'status': 'Away',
     },
     {
-      'name': 'Jordan Lee',
-      'avatar': 'assets/avatars/jordan.png',
-      'status': 'Online'
+      'name': 'Miguel Rodriguez',
+      'avatar': 'https://i.pravatar.cc/150?img=3',
+      'status': 'Online',
     },
     {
-      'name': 'Jamie Chen',
-      'avatar': 'assets/avatars/jamie.png',
-      'status': 'Busy'
+      'name': 'Priya Patel',
+      'avatar': 'https://i.pravatar.cc/150?img=4',
+      'status': 'Busy',
     },
     {
-      'name': 'Morgan Smith',
-      'avatar': 'assets/avatars/morgan.png',
-      'status': 'Online'
+      'name': 'David Chen',
+      'avatar': 'https://i.pravatar.cc/150?img=5',
+      'status': 'Online',
     },
   ];
 
@@ -138,7 +139,7 @@ class _MyDayScreenState extends State<MyDayScreen> {
                       const SizedBox(height: 20),
                       _buildAddGroupWidget(),
                       const SizedBox(height: 16),
-                      _buildAddFriendWidget(),
+                      // _buildAddFriendWidget(),
                       const SizedBox(height: 20),
                       _buildAvailableFriendsWidget(),
                       const SizedBox(height: 20),
@@ -486,7 +487,7 @@ class _MyDayScreenState extends State<MyDayScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Available Friends',
             style: TextStyle(
               fontWeight: FontWeight.bold,
@@ -494,68 +495,73 @@ class _MyDayScreenState extends State<MyDayScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              for (int i = 0; i < _availableFriends.length; i++)
-                Positioned(
-                  left: i * 20.0,
-                  child: _buildAvailableFriendAvatar(_availableFriends[i], i),
-                ),
-              const SizedBox(width: 8),
-              Text(
-                '${_availableFriends.length} Online',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-              ),
-            ],
+          SizedBox(
+            height: 48,
+            child: Stack(
+              children: List.generate(_availableFriends.length, (index) {
+                final friend = _availableFriends[index];
+                return Positioned(
+                  left: index * 40.0, // 🔧 Adjust spacing here
+                  child: _buildAvailableFriendAvatar(friend),
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${_availableFriends.length} Online',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (context) =>
+                        GroupsPage()), // Replace with your GroupsPage
+              );
+            },
             style: OutlinedButton.styleFrom(
-              minimumSize: Size(double.infinity, 40),
+              minimumSize: const Size(double.infinity, 40),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: Text('View All Friends'),
+            child: const Text('View All Friends'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAvailableFriendAvatar(Map<String, dynamic> friend, int index) {
-    return Container(
-      margin: EdgeInsets.only(left: index * 20.0),
-      child: Stack(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: Colors.grey[200],
-            backgroundImage: AssetImage(friend['avatar']),
-          ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: friend['status'] == 'Online'
-                    ? Colors.green
-                    : friend['status'] == 'Away'
-                        ? Colors.amber
-                        : Colors.grey,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
+  Widget _buildAvailableFriendAvatar(Map<String, dynamic> friend) {
+    return Stack(
+      children: [
+        CircleAvatar(
+          radius: 18,
+          backgroundImage: NetworkImage(friend['avatar']),
+        ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: friend['status'] == 'Online'
+                  ? Colors.green
+                  : friend['status'] == 'Away'
+                      ? Colors.amber
+                      : Colors.grey,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 1.5),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
