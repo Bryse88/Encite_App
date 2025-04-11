@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:encite/components/HomeComponents/app_icon_button.dart';
+import 'package:encite/components/LoginComponents/gradient_background.dart';
 import 'package:encite/components/MainComponents/background_painter.dart';
 import 'package:encite/components/HomeComponents/home_menu_item.dart';
 import 'package:flutter/material.dart';
@@ -146,19 +147,20 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
+    return GradientBackground(
+        child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: BackgroundPainter(_animationController.value),
-                size: MediaQuery.of(context).size,
-              );
-            },
-          ),
+          // AnimatedBuilder(
+          //   animation: _animationController,
+          //   builder: (context, child) {
+          //     return CustomPaint(
+          //       painter: BackgroundPainter(_animationController.value),
+          //       size: MediaQuery.of(context).size,
+          //     );
+          //   },
+          // ),
           SafeArea(
             child: Column(
               children: [
@@ -185,6 +187,7 @@ class _HomePageState extends State<HomePage>
                                 color: Colors.white,
                               ),
                             ),
+                      buildAvailabilityToggle(),
                     ],
                   ),
                 ),
@@ -227,7 +230,7 @@ class _HomePageState extends State<HomePage>
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildMenuItem(int index,
@@ -257,5 +260,75 @@ class _HomePageState extends State<HomePage>
         index: index,
       ),
     );
+  }
+
+  bool isAvailable = true; // State variable
+
+  Widget buildAvailabilityToggle() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: LinearGradient(
+            colors: isAvailable
+                ? [
+                    Color(0xFF007AFF),
+                    Color(0xFF5AC8FA)
+                  ] // Green gradient for "Free"
+                : [Color(0xFFB0BEC5), Color(0xFF90A4AE)], // Greyish for "Busy"
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: () {
+            setState(() => isAvailable = !isAvailable);
+            logAvailabilityStatus(isAvailable);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isAvailable ? Icons.check_circle : Icons.do_not_disturb,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  isAvailable ? 'Available' : 'Busy',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> logAvailabilityStatus(bool status) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('statusLogs') // 🔹 logs instead of just 'status'
+          .add({
+        'status': status ? 'Free' : 'Busy',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    }
   }
 }
