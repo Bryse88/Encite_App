@@ -14,9 +14,9 @@ class GradientBackground extends StatelessWidget {
           end: Alignment.bottomRight,
           stops: [0.0, 0.5, 1.0],
           colors: [
-            Color(0xFF1C1C1E), // Dark charcoal
-            Color(0xFF2A2438), // Muted plum-ish purple
-            Color.fromARGB(255, 44, 43, 93)
+            Color.fromARGB(255, 0, 0, 0), // Dark charcoal
+            Color.fromARGB(255, 40, 43, 48), // Muted plum-ish purple
+            Color.fromARGB(255, 45, 58, 95)
           ],
         ),
       ),
