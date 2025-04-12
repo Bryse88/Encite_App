@@ -5,6 +5,7 @@ import 'package:encite/components/LoginComponents/logo_with_name.dart';
 import 'package:encite/components/LoginComponents/social_login_options.dart';
 import 'package:encite/components/MainComponents/background_painter.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // ← required!
 
 class LoginSignupPage extends StatefulWidget {
   const LoginSignupPage({Key? key}) : super(key: key);
@@ -64,12 +65,17 @@ class _LoginSignupPageState extends State<LoginSignupPage>
                     Center(
                       child: Text(
                         'encite',
-                        style: Theme.of(context).textTheme.displayLarge,
+                        style: GoogleFonts.leagueSpartan(
+                          fontSize: 80,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                     SizedBox(height: height * 0.03),
                     Text(
-                      "Mediating your social planning",
+                      "Mediating your Social Planning",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.6),
@@ -77,7 +83,7 @@ class _LoginSignupPageState extends State<LoginSignupPage>
                         fontWeight: FontWeight.w300,
                       ),
                     ),
-                    SizedBox(height: height * 0.3),
+                    SizedBox(height: height * 0.25),
                     const SocialAuthButtons(),
                     const SizedBox(height: 16),
                     const SocialLoginOptions(),

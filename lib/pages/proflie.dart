@@ -4,10 +4,8 @@ import 'package:encite/components/MainComponents/background_painter.dart';
 import 'package:encite/components/ProfileComponents/Widgets/favorite_categories.dart';
 import 'package:encite/components/ProfileComponents/Widgets/impaler_bar.dart';
 import 'package:encite/components/ProfileComponents/Widgets/logout_button.dart';
-import 'package:encite/components/ProfileComponents/Widgets/nav_bar_item.dart';
 import 'package:encite/components/ProfileComponents/Widgets/profile_header.dart';
 import 'package:encite/components/ProfileComponents/recent_activity.dart';
-import 'package:encite/components/ProfileComponents/utils/tag_generator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
