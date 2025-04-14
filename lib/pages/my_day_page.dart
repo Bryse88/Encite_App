@@ -1,3 +1,4 @@
+import 'package:encite/components/Navigation/location_widget.dart';
 import 'package:encite/pages/group_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -85,7 +86,7 @@ class _MyDayScreenState extends State<MyDayScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'My Day',
+          'Hub',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
@@ -108,6 +109,8 @@ class _MyDayScreenState extends State<MyDayScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const LocationWidget(),
+                            const SizedBox(height: 20),
                             _buildCalendarWidget(),
                             const SizedBox(height: 20),
                             _buildAddGroupWidget(),
@@ -376,15 +379,16 @@ class _MyDayScreenState extends State<MyDayScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Create Group',
+                  const Text(
+                    'Create Schedule',
                     style: TextStyle(
+                      color: Colors.black,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   Text(
-                    'Make plans with friends',
+                    'Create a schedule for yourself',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 12,
