@@ -1,17 +1,14 @@
 import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
+import 'package:encite/components/group_components/schedule_input.dart';
+import 'package:encite/components/group_components/schedule_single_feature.dart';
 import 'package:encite/firebase_options.dart';
 import 'package:encite/pages/explore_page.dart';
 import 'package:encite/pages/group_page.dart';
-import 'package:encite/pages/home_page.dart';
 import 'package:encite/pages/my_day_page.dart';
-import 'package:encite/pages/onboarding_quiz.dart';
-import 'package:encite/pages/scheduler.dart';
 import 'package:encite/pages/settings_page.dart';
-import 'package:encite/pages/welcome_screen.dart';
 import 'package:encite/pages/chat_screen.dart';
 import 'package:encite/pages/messaging_page.dart';
 import 'package:encite/pages/proflie.dart';
-import 'package:encite/pages/login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 

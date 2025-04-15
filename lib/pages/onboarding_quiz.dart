@@ -376,10 +376,10 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
     final vibeOptions = [
       'Chill & Laid-back',
       'Social & Outgoing',
-      'Focused and Prodcutive',
+      'Focused and Productive',
       'Intimate',
       'Adventurous',
-      'Artisitc & Creative',
+      'Artistic & Creative',
       'Loud & Energetic',
     ];
 
@@ -553,7 +553,6 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
       'Gluten-free',
       'Nut allergies',
       'Dairy-free',
-      'Other (please specify)',
     ];
 
     return FadeTransition(
@@ -620,27 +619,27 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
                 ),
               );
             }).toList(),
-            if (_dietaryPreference == 'Other (please specify)')
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Please specify your dietary preferences',
-                    hintStyle: const TextStyle(color: Color(0xFF767676)),
-                    filled: true,
-                    fillColor: Colors.white,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF007AFF)),
-                    ),
-                  ),
-                  style: const TextStyle(color: Color(0xFF484848)),
-                ),
-              ),
+            // if (_dietaryPreference == 'Other (please specify)')
+            //   Padding(
+            //     padding: const EdgeInsets.only(top: 16.0),
+            //     child: TextField(
+            //       decoration: InputDecoration(
+            //         hintText: 'Please specify your dietary preferences',
+            //         hintStyle: const TextStyle(color: Color(0xFF767676)),
+            //         filled: true,
+            //         fillColor: Colors.white,
+            //         enabledBorder: OutlineInputBorder(
+            //           borderRadius: BorderRadius.circular(12),
+            //           borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+            //         ),
+            //         focusedBorder: OutlineInputBorder(
+            //           borderRadius: BorderRadius.circular(12),
+            //           borderSide: const BorderSide(color: Color(0xFF007AFF)),
+            //         ),
+            //       ),
+            //       style: const TextStyle(color: Color(0xFF484848)),
+            //     ),
+            //   ),
             const SizedBox(height: 60),
             _buildNextButton(_dietaryPreference != null),
           ],
