@@ -25,7 +25,7 @@ class AuthWrapper extends StatelessWidget {
             // User is logged in, go to Navigation page
             print('✅ User is logged in: ${user.email}');
 
-            return const HomePage();
+            return const NavigationPage();
           }
         }
 

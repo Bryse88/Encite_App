@@ -1,6 +1,4 @@
 import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
-import 'package:encite/components/group_components/schedule_input.dart';
-import 'package:encite/components/group_components/schedule_single_feature.dart';
 import 'package:encite/firebase_options.dart';
 import 'package:encite/pages/explore_page.dart';
 import 'package:encite/pages/group_page.dart';

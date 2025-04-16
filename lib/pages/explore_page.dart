@@ -33,23 +33,23 @@ class ExplorePage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              _buildFeaturedImage(),
-              const SizedBox(height: 24),
-              CategorySection(
-                title: "Drink Specials",
-                places: _getDrinkSpecials(),
-              ),
-              const SizedBox(height: 24),
-              CategorySection(
-                title: "Food Specials",
-                places: _getFoodSpecials(),
-              ),
-              const SizedBox(height: 24),
-              CategorySection(
-                title: "Nearby Spots",
-                places: _getNearbySpots(),
-              ),
-              const SizedBox(height: 32),
+              // _buildFeaturedImage(),
+              // const SizedBox(height: 24),
+              // CategorySection(
+              //   title: "Drink Specials",
+              //   places: _getDrinkSpecials(),
+              // ),
+              // const SizedBox(height: 24),
+              // CategorySection(
+              //   title: "Food Specials",
+              //   places: _getFoodSpecials(),
+              // ),
+              // const SizedBox(height: 24),
+              // CategorySection(
+              //   title: "Nearby Spots",
+              //   places: _getNearbySpots(),
+              // ),
+              // const SizedBox(height: 32),
             ],
           ),
         ),

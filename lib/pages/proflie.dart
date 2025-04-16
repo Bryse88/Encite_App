@@ -132,13 +132,6 @@ class _ProfilePageState extends State<ProfilePage>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back_ios,
-                                  color: Colors.white),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
                             const Text(
                               'Profile',
                               style: TextStyle(
@@ -155,7 +148,9 @@ class _ProfilePageState extends State<ProfilePage>
                               child: IconButton(
                                 icon: const Icon(Icons.settings,
                                     color: Colors.white),
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/settings');
+                                },
                               ),
                             ),
                           ],

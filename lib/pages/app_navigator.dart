@@ -1,9 +1,8 @@
 import 'dart:ui';
-
+import 'package:encite/pages/explore_page.dart';
+import 'package:encite/pages/group_page.dart';
 import 'package:encite/pages/home_page.dart';
-import 'package:encite/pages/messaging_page.dart';
 import 'package:encite/pages/proflie.dart';
-import 'package:encite/pages/scheduler.dart';
 import 'package:flutter/material.dart';
 
 class NavigationPage extends StatefulWidget {
@@ -21,8 +20,8 @@ class _AppNavigatorState extends State<NavigationPage> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    const SchedulingPage(),
-    const ChatsPage(),
+    const ExplorePage(),
+    GroupsPage(),
     const ProfilePage(),
   ];
 
@@ -116,8 +115,8 @@ class _AppNavigatorState extends State<NavigationPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildNavBarItem(0, Icons.home_outlined, 'Home'),
-                      _buildNavBarItem(1, Icons.schedule, 'Schedule'),
-                      _buildNavBarItem(2, Icons.chat_bubble_outline, 'Chats'),
+                      _buildNavBarItem(1, Icons.explore, 'Explore'),
+                      _buildNavBarItem(2, Icons.groups, 'Group'),
                       _buildNavBarItem(3, Icons.person_outline, 'Profile'),
                     ],
                   ),
