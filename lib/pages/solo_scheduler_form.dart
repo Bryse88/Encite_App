@@ -109,14 +109,12 @@ class _SchedulerFormState extends State<SoloSchedulerForm>
     }
 
     // Handle location
-    String locationName = _location;
+    String locationName;
     if (_useCurrentLocation) {
       final currentLocation = await _getCurrentLocation();
-      if (currentLocation != null) {
-        locationName = currentLocation;
-      } else {
-        locationName = "Madison, WI"; // Default fallback
-      }
+      locationName = currentLocation ?? "Madison, WI";
+    } else {
+      locationName = _location.isNotEmpty ? _location : "Madison, WI";
     }
 
     // Prepare time values
@@ -208,7 +206,7 @@ class _SchedulerFormState extends State<SoloSchedulerForm>
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
                   Text(
-                    "Creating your perfect schedule...",
+                    "Creating your Social Plans",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
