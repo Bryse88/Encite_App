@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encite/components/HomeComponents/home_tools/gradient_button.dart';
 import 'package:encite/components/HomeComponents/home_tools/gradient_text.dart';
 import 'package:encite/components/ProfileComponents/utils/tag_generator.dart';
-import 'package:encite/pages/home_page.dart';
+import 'package:encite/pages/app_navigator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -127,7 +127,7 @@ class _OnboardingQuizState extends State<OnboardingQuiz>
       }, SetOptions(merge: true));
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => const NavigationPage()),
       );
     } catch (e) {
       print("Error saving onboarding: $e");
