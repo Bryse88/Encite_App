@@ -1,13 +1,26 @@
 import 'dart:ui';
-import 'package:encite/components/LoginComponents/gradient_background.dart';
-import 'package:encite/pages/messaging_page.dart';
+import 'package:encite/pages/solo_scheduler_form.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:encite/components/Navigation/location_widget.dart';
 import 'package:encite/pages/group_page.dart';
+import 'package:encite/pages/messaging_page.dart';
 import 'package:intl/intl.dart';
+
+// Uber-inspired color constants
+class UberColors {
+  static const Color primary = Color(0xFF276EF1); // Uber Blue
+  static const Color background = Color(0xFF121212); // Very dark gray/black
+  static const Color surface = Color(0xFF1C1C1E); // Slightly lighter dark
+  static const Color cardBg = Color(0xFF222222); // Card background
+  static const Color textPrimary = Color(0xFFFFFFFF); // White
+  static const Color textSecondary = Color(0xFFAAAAAA); // Light gray
+  static const Color accent = Color(0xFF15D071); // Success green
+  static const Color divider = Color(0xFF2A2A2A); // Dark gray divider
+  static const Color error = Color(0xFFE51919); // Error/alert red
+}
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -178,24 +191,16 @@ class _HomePageState extends State<HomePage>
   Widget buildAvailabilityToggle() {
     return Row(
       children: [
+        // Updated toggle with Uber-style colors and aesthetics
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            gradient: LinearGradient(
-              colors: isAvailable
-                  ? [Color(0xFF007AFF), Color(0xFF5AC8FA)]
-                  : [Color(0xFFB0BEC5), Color(0xFF90A4AE)],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 6,
-                offset: Offset(0, 3),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(20),
+            color: isAvailable
+                ? UberColors.primary.withOpacity(0.15)
+                : UberColors.cardBg,
           ),
           child: InkWell(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(20),
             onTap: () {
               setState(() => isAvailable = !isAvailable);
               logAvailabilityStatus(isAvailable);
@@ -206,16 +211,21 @@ class _HomePageState extends State<HomePage>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isAvailable ? Icons.check_circle : Icons.do_not_disturb,
-                    color: Colors.white,
-                    size: 18,
+                    isAvailable ? Icons.circle : Icons.do_not_disturb,
+                    color: isAvailable
+                        ? UberColors.primary
+                        : UberColors.textSecondary,
+                    size: 16,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     isAvailable ? 'Available' : 'Busy',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                    style: TextStyle(
+                      color: isAvailable
+                          ? UberColors.primary
+                          : UberColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
                     ),
                   ),
                 ],
@@ -223,7 +233,8 @@ class _HomePageState extends State<HomePage>
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
+        // Updated message button with Uber styling
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -234,35 +245,37 @@ class _HomePageState extends State<HomePage>
           child: Stack(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(20),
+                  color: UberColors.cardBg,
+                  borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: const Icon(
-                  Icons.message_outlined,
-                  color: Colors.white,
-                  size: 20,
+                  Icons.chat_bubble_outline_rounded,
+                  color: UberColors.textPrimary,
+                  size: 18,
                 ),
               ),
+              // Notification dot
               Positioned(
                 right: 0,
                 top: 0,
                 child: Container(
-                  width: 14,
-                  height: 14,
+                  width: 10,
+                  height: 10,
                   decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(7),
-                    border: Border.all(color: Colors.black, width: 1.5),
+                    color: UberColors.error,
+                    borderRadius: BorderRadius.circular(5),
+                    border:
+                        Border.all(color: UberColors.background, width: 1.5),
                   ),
                 ),
               ),
@@ -288,48 +301,63 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    return GradientBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Header from HomePage (greeting and availability toggle)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _isLoading
-                        ? const SizedBox(
-                            height: 22,
-                            width: 120,
-                            child: LinearProgressIndicator(
-                              backgroundColor: Colors.white10,
-                              color: Colors.white38,
-                            ),
-                          )
-                        : Text(
-                            'Hey, $_firstName!',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                    buildAvailabilityToggle(),
-                  ],
-                ),
+    return Scaffold(
+      // Use Uber's dark color scheme
+      backgroundColor: UberColors.background,
+      body: Stack(
+        children: [
+          // Background with subtle gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [UberColors.background, Color(0xFF0A0A0A)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-
-              // Content from MyDayScreen
-              Expanded(
-                child: _buildMyDayContent(),
-              ),
-            ],
+            ),
           ),
-        ),
+          // Foreground UI
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: greeting + toggle with improved styling
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0, vertical: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _isLoading
+                          ? Container(
+                              height: 24,
+                              width: 120,
+                              decoration: BoxDecoration(
+                                color: UberColors.cardBg,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            )
+                          : Text(
+                              'Hey, $_firstName!',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                color: UberColors.textPrimary,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                      buildAvailabilityToggle(),
+                    ],
+                  ),
+                ),
+                // Main content scroll
+                Expanded(
+                  child: _buildMyDayContent(),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -340,7 +368,7 @@ class _HomePageState extends State<HomePage>
         bool isWideScreen = constraints.maxWidth > 800;
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
           physics: const BouncingScrollPhysics(),
           child: isWideScreen
               ? Row(
@@ -353,16 +381,16 @@ class _HomePageState extends State<HomePage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const LocationWidget(),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
                           _buildCalendarWidget(),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
                           _buildAddGroupWidget(),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 24),
                           _buildAddFriendWidget(),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 24),
 
                     // Right Column
                     Expanded(
@@ -371,7 +399,7 @@ class _HomePageState extends State<HomePage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildAvailableFriendsWidget(),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
                           _buildUpcomingEventsWidget(),
                         ],
                       ),
@@ -381,19 +409,15 @@ class _HomePageState extends State<HomePage>
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // const LocationWidget(),
-                    const SizedBox(height: 20),
-                    _buildAddGroupWidget(),
-                    const SizedBox(height: 20),
-                    _buildAddSingleWidget(),
-                    const SizedBox(height: 20),
-                    _buildAvailableFriendsWidget(),
-                    const SizedBox(height: 20),
-
-                    _buildCalendarWidget(),
                     const SizedBox(height: 16),
-                    // _buildAddFriendWidget(),
-                    const SizedBox(height: 20),
+                    _buildAddGroupWidget(),
+                    const SizedBox(height: 24),
+                    _buildAddSingleWidget(),
+                    const SizedBox(height: 24),
+                    _buildAvailableFriendsWidget(),
+                    const SizedBox(height: 24),
+                    _buildCalendarWidget(),
+                    const SizedBox(height: 24),
                     _buildUpcomingEventsWidget(),
                   ],
                 ),
@@ -404,15 +428,15 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildCalendarWidget() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey,
-        borderRadius: BorderRadius.circular(12),
+        color: UberColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -424,52 +448,69 @@ class _HomePageState extends State<HomePage>
             children: [
               Text(
                 DateFormat('MMMM yyyy').format(_selectedDate),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
                   fontSize: 16,
+                  color: UberColors.textPrimary,
+                  letterSpacing: -0.5,
                 ),
               ),
               Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back_ios, size: 16),
+                    icon: const Icon(
+                      Icons.chevron_left_rounded,
+                      color: UberColors.textPrimary,
+                      size: 20,
+                    ),
                     onPressed: () {
                       setState(() {
                         _selectedDate = DateTime(
                             _selectedDate.year, _selectedDate.month - 1, 1);
                       });
                     },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
                   ),
+                  const SizedBox(width: 16),
                   IconButton(
-                    icon: Icon(Icons.arrow_forward_ios, size: 16),
+                    icon: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: UberColors.textPrimary,
+                      size: 20,
+                    ),
                     onPressed: () {
                       setState(() {
                         _selectedDate = DateTime(
                             _selectedDate.year, _selectedDate.month + 1, 1);
                       });
                     },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
 
           // Day labels (Mon, Tue, etc.)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+            children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
                 .map((day) => Text(
                       day,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: Colors.grey[600],
+                        color: UberColors.textSecondary,
                       ),
                     ))
                 .toList(),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
 
           // Calendar grid
           _buildCalendarGrid(),
@@ -483,7 +524,6 @@ class _HomePageState extends State<HomePage>
     final firstDay = DateTime(_selectedDate.year, _selectedDate.month, 1);
 
     // Calculate days from previous month to display
-    // (e.g., if first day is Wednesday, we need to show Mon & Tue from previous month)
     final daysFromPreviousMonth = (firstDay.weekday - 1) % 7;
 
     // Calculate the total number of days in the selected month
@@ -536,6 +576,9 @@ class _HomePageState extends State<HomePage>
                   date.month == DateTime.now().month &&
                   date.day == DateTime.now().day;
               final hasEvent = _hasEvent(date);
+              final isSelected = date.year == _selectedDate.year &&
+                  date.month == _selectedDate.month &&
+                  date.day == _selectedDate.day;
 
               return GestureDetector(
                 onTap: () {
@@ -544,27 +587,37 @@ class _HomePageState extends State<HomePage>
                   });
                 },
                 child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: isToday
+                  width: 32,
+                  height: 32,
+                  decoration: isSelected
                       ? BoxDecoration(
+                          color: UberColors.primary.withOpacity(0.2),
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Theme.of(context).primaryColor,
-                            width: 2,
-                          ),
                         )
-                      : null,
+                      : isToday
+                          ? BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: UberColors.primary,
+                                width: 1.5,
+                              ),
+                            )
+                          : null,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         date.day.toString(),
                         style: TextStyle(
-                          color:
-                              isCurrentMonth ? Colors.black : Colors.grey[400],
-                          fontWeight:
-                              isToday ? FontWeight.bold : FontWeight.normal,
+                          color: isCurrentMonth
+                              ? (isSelected
+                                  ? UberColors.primary
+                                  : UberColors.textPrimary)
+                              : UberColors.textSecondary.withOpacity(0.5),
+                          fontWeight: isToday || isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          fontSize: 13,
                         ),
                       ),
                       if (hasEvent)
@@ -573,7 +626,7 @@ class _HomePageState extends State<HomePage>
                           width: 4,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
+                            color: UberColors.primary,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -592,19 +645,24 @@ class _HomePageState extends State<HomePage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey,
-        borderRadius: BorderRadius.circular(12),
+        color: UberColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: InkWell(
         onTap: () {
-          // Open group creation dialog/page
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SoloSchedulerForm(),
+            ),
+          );
         },
         child: Row(
           children: [
@@ -612,12 +670,12 @@ class _HomePageState extends State<HomePage>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: UberColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.group_add,
-                color: Theme.of(context).primaryColor,
+              child: const Icon(
+                Icons.person_outline_rounded,
+                color: UberColors.primary,
                 size: 20,
               ),
             ),
@@ -625,29 +683,31 @@ class _HomePageState extends State<HomePage>
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     'Create Solo Schedule',
                     style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
+                      color: UberColors.textPrimary,
+                      fontWeight: FontWeight.w600,
                       fontSize: 16,
+                      letterSpacing: -0.5,
                     ),
                   ),
+                  SizedBox(height: 4),
                   Text(
                     'Create a schedule for yourself',
                     style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
+                      color: UberColors.textSecondary,
+                      fontSize: 13,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios,
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
               size: 16,
-              color: Colors.grey[400],
+              color: UberColors.textSecondary,
             ),
           ],
         ),
@@ -659,19 +719,21 @@ class _HomePageState extends State<HomePage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey,
-        borderRadius: BorderRadius.circular(12),
+        color: UberColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: InkWell(
         onTap: () {
-          // Open group creation dialog/page
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => GroupsPage()),
+          );
         },
         child: Row(
           children: [
@@ -679,12 +741,12 @@ class _HomePageState extends State<HomePage>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: UberColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.group_add,
-                color: Theme.of(context).primaryColor,
+              child: const Icon(
+                Icons.group_outlined,
+                color: UberColors.primary,
                 size: 20,
               ),
             ),
@@ -692,29 +754,31 @@ class _HomePageState extends State<HomePage>
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     'Create Group Schedule',
                     style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
+                      color: UberColors.textPrimary,
+                      fontWeight: FontWeight.w600,
                       fontSize: 16,
+                      letterSpacing: -0.5,
                     ),
                   ),
+                  SizedBox(height: 4),
                   Text(
                     'Create a schedule with a group',
                     style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
+                      color: UberColors.textSecondary,
+                      fontSize: 13,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios,
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
               size: 16,
-              color: Colors.grey[400],
+              color: UberColors.textSecondary,
             ),
           ],
         ),
@@ -726,13 +790,13 @@ class _HomePageState extends State<HomePage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: UberColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -746,12 +810,12 @@ class _HomePageState extends State<HomePage>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: UberColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.person_add,
-                color: Theme.of(context).primaryColor,
+              child: const Icon(
+                Icons.person_add_outlined,
+                color: UberColors.primary,
                 size: 20,
               ),
             ),
@@ -759,28 +823,31 @@ class _HomePageState extends State<HomePage>
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                children: const [
                   Text(
                     'Add Friends',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                      color: UberColors.textPrimary,
+                      fontWeight: FontWeight.w600,
                       fontSize: 16,
+                      letterSpacing: -0.5,
                     ),
                   ),
+                  SizedBox(height: 4),
                   Text(
                     'Expand your network',
                     style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
+                      color: UberColors.textSecondary,
+                      fontSize: 13,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios,
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
               size: 16,
-              color: Colors.grey[400],
+              color: UberColors.textSecondary,
             ),
           ],
         ),
@@ -790,63 +857,60 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildAvailableFriendsWidget() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey,
-        borderRadius: BorderRadius.circular(12),
+        color: UberColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Available Friends',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Available Friends',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  color: UberColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: UberColors.textSecondary,
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           SizedBox(
             height: 48,
             child: Stack(
               children: List.generate(_availableFriends.length, (index) {
                 final friend = _availableFriends[index];
                 return Positioned(
-                  left: index * 40.0, // Adjust spacing here
+                  left: index * 36.0, // Increased spacing between avatars
                   child: _buildAvailableFriendAvatar(friend),
                 );
               }),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           Text(
             '${_availableFriends.length} Online',
-            style: TextStyle(
-              color: Colors.grey[600],
+            style: const TextStyle(
+              color: UberColors.textSecondary,
               fontSize: 14,
             ),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => GroupsPage()),
-              );
-            },
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 40),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('View All Friends'),
           ),
         ],
       ),
@@ -854,61 +918,81 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildAvailableFriendAvatar(Map<String, dynamic> friend) {
-    return Stack(
-      children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundImage: NetworkImage(friend['avatar']),
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: UberColors.background,
+          width: 2,
         ),
-        Positioned(
-          right: 0,
-          bottom: 0,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: friend['status'] == 'Online'
-                  ? Colors.green
-                  : friend['status'] == 'Away'
-                      ? Colors.amber
-                      : Colors.grey,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey, width: 1.5),
+      ),
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundImage: friend['avatar'] != null
+                ? NetworkImage(friend['avatar'])
+                : null,
+            backgroundColor: UberColors.surface,
+            child: friend['avatar'] == null
+                ? const Icon(
+                    Icons.person,
+                    color: UberColors.textSecondary,
+                  )
+                : null,
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: friend['status'] == 'Online'
+                    ? UberColors.accent // Green for online
+                    : friend['status'] == 'Away'
+                        ? Colors.amber // Amber for away
+                        : UberColors.textSecondary, // Grey for busy
+                shape: BoxShape.circle,
+                border: Border.all(color: UberColors.background, width: 1.5),
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildUpcomingEventsWidget() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey,
-        borderRadius: BorderRadius.circular(12),
+        color: UberColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Upcoming Events',
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+              color: UberColors.textPrimary,
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 16),
           for (var event in _upcomingEvents) ...[
             _buildEventCard(event),
-            if (event != _upcomingEvents.last) const SizedBox(height: 12),
+            if (event != _upcomingEvents.last) const SizedBox(height: 16),
           ],
         ],
       ),
@@ -917,11 +1001,11 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildEventCard(Map<String, dynamic> event) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
+        color: UberColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: UberColors.divider, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -929,26 +1013,37 @@ class _HomePageState extends State<HomePage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                event['isGroup'] ? event['groupName'] : 'Personal',
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: event['isGroup']
+                      ? UberColors.primary.withOpacity(0.1)
+                      : UberColors.accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  event['isGroup'] ? event['groupName'] : 'Personal',
+                  style: TextStyle(
+                    color: event['isGroup']
+                        ? UberColors.primary
+                        : UberColors.accent,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
                 ),
               ),
               Row(
                 children: [
                   Icon(
-                    Icons.access_time,
-                    size: 12,
-                    color: Colors.grey[600],
+                    Icons.access_time_rounded,
+                    size: 14,
+                    color: UberColors.textSecondary,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     event['time'],
-                    style: TextStyle(
-                      color: Colors.grey[600],
+                    style: const TextStyle(
+                      color: UberColors.textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -956,34 +1051,35 @@ class _HomePageState extends State<HomePage>
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             event['title'],
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
               fontSize: 16,
+              color: UberColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
-              Icon(
-                Icons.location_on,
+              const Icon(
+                Icons.location_on_outlined,
                 size: 14,
-                color: Colors.grey[600],
+                color: UberColors.textSecondary,
               ),
               const SizedBox(width: 4),
               Text(
                 event['location'],
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
+                style: const TextStyle(
+                  color: UberColors.textSecondary,
+                  fontSize: 13,
                 ),
               ),
             ],
           ),
           if (event['participants'] > 0) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -991,34 +1087,60 @@ class _HomePageState extends State<HomePage>
                   children: [
                     for (int i = 0; i < min(3, event['participants']); i++)
                       Container(
-                        margin: EdgeInsets.only(right: 4),
-                        width: 20,
-                        height: 20,
+                        margin: const EdgeInsets.only(right: 6),
+                        width: 24,
+                        height: 24,
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: UberColors.surface,
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: UberColors.divider,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.person_outline,
+                            size: 14,
+                            color: UberColors.textSecondary,
+                          ),
                         ),
                       ),
                     if (event['participants'] > 3)
-                      Text(
-                        '+${event['participants'] - 3}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: UberColors.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '+${event['participants'] - 3}',
+                            style: const TextStyle(
+                              color: UberColors.primary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                   ],
                 ),
-                TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: UberColors.primary,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
+                  child: const Text(
                     'RSVP',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],

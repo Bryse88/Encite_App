@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:encite/components/Colors/uber_colors.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -105,18 +106,16 @@ class _SettingsPageState extends State<SettingsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Animated background
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: BackgroundPainter(_animationController.value),
-                size: MediaQuery.of(context).size,
-              );
-            },
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [UberColors.background, Color(0xFF0A0A0A)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
           ),
 
           // Main content

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:encite/components/ChatComponents/chat_service.dart';
 import 'package:encite/components/ChatComponents/navigation_bottom_sheet.dart';
+import 'package:encite/components/Colors/uber_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:encite/components/ChatComponents/chat_models.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -93,139 +94,144 @@ class _ChatsPageState extends State<ChatsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.transparent,
+        // backgroundColor: Colors.transparent,
         body: Stack(
-          children: [
-            // Background gradient
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1C1C1E), Colors.black],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
+      children: [
+        // Background gradient
+        // Container(
+        //   decoration: const BoxDecoration(
+        //     gradient: LinearGradient(
+        //       colors: [Color(0xFF1C1C1E), Colors.black],
+        //       begin: Alignment.topCenter,
+        //       end: Alignment.bottomCenter,
+        //     ),
+        //   ),
+        // ),
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [UberColors.background, Color(0xFF0A0A0A)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
-
-            SafeArea(
-              child: Column(
-                children: [
-                  // Header with search functionality
-                  // Header with search functionality
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: _isSearching
-                        ? TextField(
-                            controller: _searchController,
-                            autofocus: true,
-                            onChanged: _searchUsers,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              hintText: 'Search users...',
-                              hintStyle: TextStyle(
-                                  color: Colors.white.withOpacity(0.6)),
-                              prefixIcon:
-                                  const Icon(Icons.search, color: Colors.white),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.close,
-                                    color: Colors.white),
-                                onPressed: _toggleSearch,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.1),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ),
+        ),
+        SafeArea(
+          child: Column(
+            children: [
+              // Header with search functionality
+              // Header with search functionality
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: _isSearching
+                    ? TextField(
+                        controller: _searchController,
+                        autofocus: true,
+                        onChanged: _searchUsers,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Search users...',
+                          hintStyle:
+                              TextStyle(color: Colors.white.withOpacity(0.6)),
+                          prefixIcon:
+                              const Icon(Icons.search, color: Colors.white),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: _toggleSearch,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.1),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  // Add the back button here
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: BackdropFilter(
-                                      filter: ImageFilter.blur(
-                                          sigmaX: 5, sigmaY: 5),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: IconButton(
-                                          icon: const Icon(Icons.arrow_back,
-                                              color: Colors.white),
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(),
-                                        ),
-                                      ),
+                              // Add the back button here
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: BackdropFilter(
+                                  filter:
+                                      ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.arrow_back,
+                                          color: Colors.white),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  const Text(
-                                    'Chats',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.search,
-                                    color: Colors.white),
-                                onPressed: _toggleSearch,
+                              const SizedBox(width: 16),
+                              const Text(
+                                'Chats',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ],
                           ),
-                  ),
-
-                  // Search results or chat list
-                  Expanded(
-                    child: _isSearching
-                        ? _buildSearchResults()
-                        : _buildConversationsList(),
-                  ),
-
-                  // Start chat button
-                  Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: GestureDetector(
-                      onTap: _startNewChat,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF007AFF), Color(0xFF5AC8FA)],
+                          IconButton(
+                            icon: const Icon(Icons.search, color: Colors.white),
+                            onPressed: _toggleSearch,
                           ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Start New Chat',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                        ],
+                      ),
+              ),
+
+              // Search results or chat list
+              Expanded(
+                child: _isSearching
+                    ? _buildSearchResults()
+                    : _buildConversationsList(),
+              ),
+
+              // Start chat button
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: GestureDetector(
+                  onTap: _startNewChat,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF007AFF), Color(0xFF5AC8FA)],
+                      ),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Start New Chat',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 70), // Space for blurred nav bar
-                ],
+                ),
               ),
-            ),
-          ],
-        ));
+
+              const SizedBox(height: 70), // Space for blurred nav bar
+            ],
+          ),
+        ),
+      ],
+    ));
   }
 
   Widget _buildConversationsList() {

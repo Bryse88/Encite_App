@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:encite/pages/app_navigator.dart';
 import 'package:encite/pages/home_page.dart';
 import 'package:encite/pages/onboarding_quiz.dart';
 import 'package:flutter/material.dart';
@@ -172,7 +173,7 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => onboardingComplete
-              ? const HomePage() // home page with tabs
+              ? NavigationPage() // home page with tabs
               : const OnboardingQuiz(), // quiz flow
         ),
       );

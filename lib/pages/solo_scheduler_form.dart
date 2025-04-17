@@ -4,14 +4,14 @@ import 'package:encite/components/group_components/steps/timeframe.dart';
 import 'package:encite/components/group_components/steps/transportation_step.dart';
 import 'package:flutter/material.dart';
 
-class GroupSchedulerForm extends StatefulWidget {
-  const GroupSchedulerForm({Key? key}) : super(key: key);
+class SoloSchedulerForm extends StatefulWidget {
+  const SoloSchedulerForm({Key? key}) : super(key: key);
 
   @override
-  State<GroupSchedulerForm> createState() => _SchedulerFormState();
+  State<SoloSchedulerForm> createState() => _SchedulerFormState();
 }
 
-class _SchedulerFormState extends State<GroupSchedulerForm>
+class _SchedulerFormState extends State<SoloSchedulerForm>
     with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;

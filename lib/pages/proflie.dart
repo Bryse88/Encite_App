@@ -1,13 +1,11 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:encite/components/MainComponents/background_painter.dart';
-import 'package:encite/components/ProfileComponents/Widgets/favorite_categories.dart';
-import 'package:encite/components/ProfileComponents/Widgets/impaler_bar.dart';
-import 'package:encite/components/ProfileComponents/Widgets/logout_button.dart';
-import 'package:encite/components/ProfileComponents/Widgets/profile_header.dart';
-import 'package:encite/components/ProfileComponents/recent_activity.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:encite/components/Colors/uber_colors.dart';
+
+// Import the UberColors class we created earlier
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -17,41 +15,16 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  // Add this to implement AutomaticKeepAliveClientMixin
+  @override
+  bool get wantKeepAlive => true;
+
   late AnimationController _animationController;
   Map<String, dynamic>? userData; // nullable to allow loading
+  bool _isDataInitialized = false;
 
-  final Map<String, dynamic> userData1 = {
-    'name': 'Alex Morgan',
-    'username': '@alexmorgan',
-    'email': 'alex.morgan@example.com',
-    'profileImage': 'https://i.pravatar.cc/300',
-    'favoriteCategories': [
-      'AI & Tech',
-      'Productivity',
-      'Health',
-      'Design',
-      'Travel',
-      'Photography',
-      'Music',
-      'Reading'
-    ],
-    'recentActivity': [
-      {'type': 'Event', 'title': 'Team Brainstorming', 'time': '2 hours ago'},
-      {
-        'type': 'Schedule',
-        'title': 'Updated work calendar',
-        'time': 'Yesterday'
-      },
-      {'type': 'Chat', 'title': 'Design Team Discussion', 'time': '2 days ago'},
-      {'type': 'Event', 'title': 'Product Meeting', 'time': '3 days ago'},
-      {
-        'type': 'Schedule',
-        'title': 'AI-optimized week plan',
-        'time': '5 days ago'
-      },
-    ]
-  };
+  // Mock data for testing UI
 
   @override
   void initState() {
@@ -61,15 +34,36 @@ class _ProfilePageState extends State<ProfilePage>
       vsync: this,
     )..repeat(reverse: true);
 
-    fetchUserData();
+    // Only fetch data if it hasn't been initialized yet
+    if (!_isDataInitialized) {
+      fetchUserData();
+    }
+  }
+
+  Future<void> signUserOut() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('sessionLogs')
+          .add({
+        'type': 'logout',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    }
+    await FirebaseAuth.instance.signOut();
   }
 
   Future<void> fetchUserData() async {
+    // Don't fetch if data is already loaded
+    if (_isDataInitialized) return;
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      final uid = user.uid; // ✅ Keep this for reuse
+      final uid = user.uid;
 
       // Fetch base user doc
       final userDoc =
@@ -87,13 +81,16 @@ class _ProfilePageState extends State<ProfilePage>
           ? List<String>.from(onboardingDoc.data()?['tags'] ?? [])
           : <String>[];
 
-      setState(() {
-        userData = {
-          'uid': uid,
-          ...?userDoc.data() as Map<String, dynamic>?,
-          'identityTags': identityTags,
-        };
-      });
+      if (mounted) {
+        setState(() {
+          userData = {
+            'uid': uid,
+            ...?userDoc.data() as Map<String, dynamic>?,
+            'identityTags': identityTags,
+          };
+          _isDataInitialized = true;
+        });
+      }
     } catch (e) {
       print('Error fetching user data: $e');
     }
@@ -107,145 +104,380 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    // Call super.build to satisfy AutomaticKeepAliveClientMixin
+    super.build(context);
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: UberColors.background,
       body: userData == null
           ? const Center(
-              child: CircularProgressIndicator(color: Colors.white),
+              child: CircularProgressIndicator(
+                color: UberColors.primary,
+                strokeWidth: 2.5,
+              ),
             )
           : Stack(
               children: [
-                // Animated background
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return CustomPaint(
-                      painter: BackgroundPainter(_animationController.value),
-                      size: MediaQuery.of(context).size,
-                    );
-                  },
+                // Background with subtle gradient
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [UberColors.background, Color(0xFF0A0A0A)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
                 ),
                 // Content
                 SafeArea(
-                  child: Column(
-                    children: [
-                      // Header with title and settings button
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Profile',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
+                    child: SingleChildScrollView(
+                  // 🟢 Wrap the entire content here
+                  physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        bottom: 32.0), // optional bottom padding
+                    child: Column(
+                      children: [
+                        // Header with title and settings button
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 16.0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Profile',
+                                style: TextStyle(
+                                  color: UberColors.textPrimary,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.5,
+                                ),
                               ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: UberColors.cardBg,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.settings_outlined,
+                                    color: UberColors.textPrimary,
+                                    size: 20,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pushNamed(context, '/settings');
+                                  },
+                                ),
                               ),
-                              child: IconButton(
-                                icon: const Icon(Icons.settings,
-                                    color: Colors.white),
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/settings');
-                                },
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
 
-                      // Scrollable content
-                      Expanded(
-                        child: SingleChildScrollView(
+                        // Scrollable content
+                        SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
                           child: Column(
                             children: [
                               // Profile header (avatar, name, stats)
                               buildProfileHeader(userData!),
-                              const SizedBox(height: 20),
+                              SizedBox(
+                                  height: MediaQuery.of(context).size.height *
+                                      0.02),
                               // Impaler bar (visual element)
-                              buildImpalerBar(),
-                              const SizedBox(height: 20),
+                              buildImpalerBar(userData!),
+                              SizedBox(
+                                  height: MediaQuery.of(context).size.height *
+                                      0.02),
                               // Identity tags section
                               buildIdentityTags(userData!),
-                              const SizedBox(height: 24),
-                              // Recent activity section with proper padding
+                              SizedBox(
+                                  height: MediaQuery.of(context).size.height *
+                                      0.02),
+                              // Recent activity section
                               Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0),
+                                    horizontal: 20.0),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Display recent activity list without Expanded
                                     Container(
-                                      // Use fixed height instead of Expanded
                                       constraints: const BoxConstraints(
-                                        minHeight:
-                                            200, // Minimum height for content
-                                        maxHeight:
-                                            400, // Maximum height before scrolling
+                                        minHeight: 200,
+                                        maxHeight: 400,
                                       ),
                                       child:
-                                          buildRecentActivityFixed(userData1),
+                                          buildRecentActivityFixed(userData!),
                                     ),
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 16),
-                              // Logout button
+                              SizedBox(
+                                  height: MediaQuery.of(context).size.height *
+                                      0.02), // Logout button
                               buildLogoutButton(context),
-                              // Add some padding at the bottom
-                              const SizedBox(height: 24),
+                              // Bottom padding
+                              SizedBox(
+                                  height: MediaQuery.of(context).size.height *
+                                      0.02),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ))
               ],
             ),
     );
   }
 
-  // Modified version of recent activity that doesn't use Expanded
+  Widget buildProfileHeader(Map<String, dynamic> userData) {
+    final name = userData['name'] ?? 'User';
+    final username = userData['uid'] ?? '@username';
+    final profileImage = userData['photoURL'] ?? 'https://i.pravatar.cc/300';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Profile Image with elegant border
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: UberColors.primary.withOpacity(0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  backgroundImage: NetworkImage(profileImage),
+                ),
+              ),
+              const SizedBox(width: 20),
+              // User info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: UberColors.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      username,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: UberColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Uber-inspired profile button
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: UberColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Edit Profile',
+                        style: TextStyle(
+                          color: UberColors.primary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildImpalerBar(Map<String, dynamic> userData) {
+    final groupNumber = userData['groupNumber'] ?? '0';
+    final friendsNumber = userData['friendsNumber'] ?? '0';
+    final schedulesCreated = userData['schedulesCreated'] ?? '0';
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      decoration: BoxDecoration(
+        color: UberColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStat(groupNumber, 'Groups'),
+          _buildVerticalDivider(),
+          _buildStat(friendsNumber, 'Friends'),
+          _buildVerticalDivider(),
+          _buildStat(schedulesCreated, 'Schedules'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStat(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: UberColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: UberColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerticalDivider() {
+    return Container(
+      height: 30,
+      width: 1,
+      color: UberColors.divider,
+    );
+  }
+
+  Widget buildIdentityTags(Map<String, dynamic> userData) {
+    final List<String> tags = userData['identityTags'] ?? [];
+
+    if (tags.isEmpty) {
+      tags.addAll(['Design', 'Technology', 'Product', 'UX/UI', 'Innovation']);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Interests',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: UberColors.textPrimary,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 12,
+            children: tags.map((tag) => _buildIdentityTag(tag)).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIdentityTag(String tag) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: UberColors.cardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: UberColors.divider,
+          width: 1,
+        ),
+      ),
+      child: Text(
+        tag,
+        style: const TextStyle(
+          color: UberColors.textPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
   Widget buildRecentActivityFixed(Map<String, dynamic> userData) {
-    final recentActivity = userData['recentActivity'] as List<dynamic>;
+    final recentActivity = (userData['recentActivity'] ?? []) as List<dynamic>;
+
+    if (recentActivity.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min, // Important: don't try to take all space
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Text(
           'Recent Activity',
           style: TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            color: UberColors.textPrimary,
+            letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 16),
-        // Use ListView.builder directly
         ListView.builder(
-          shrinkWrap: true, // Important: wrap content, don't expand
-          physics:
-              const NeverScrollableScrollPhysics(), // Don't allow this ListView to scroll
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: recentActivity.length,
           itemBuilder: (context, index) {
             final activity = recentActivity[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16.0),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: UberColors.cardBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: UberColors.divider,
+                  width: 1,
+                ),
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildActivityIcon(activity['type']),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,15 +487,15 @@ class _ProfilePageState extends State<ProfilePage>
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: UberColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
                           activity['time'],
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[400],
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: UberColors.textSecondary,
                           ),
                         ),
                       ],
@@ -284,32 +516,83 @@ class _ProfilePageState extends State<ProfilePage>
 
     switch (type) {
       case 'Event':
-        iconData = Icons.event;
-        iconColor = Colors.blue;
+        iconData = Icons.event_outlined;
+        iconColor = UberColors.primary;
         break;
       case 'Chat':
-        iconData = Icons.chat_bubble;
-        iconColor = Colors.green;
+        iconData = Icons.chat_bubble_outline_rounded;
+        iconColor = UberColors.accent;
         break;
       case 'Schedule':
-        iconData = Icons.calendar_today;
-        iconColor = Colors.orange;
+        iconData = Icons.calendar_today_outlined;
+        iconColor = Color(0xFFFFC043); // Amber
         break;
       default:
-        iconData = Icons.circle;
-        iconColor = Colors.grey;
+        iconData = Icons.circle_outlined;
+        iconColor = UberColors.textSecondary;
     }
 
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: iconColor.withOpacity(0.1),
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(
         iconData,
         color: iconColor,
-        size: 18,
+        size: 20,
+      ),
+    );
+  }
+
+  Widget buildLogoutButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Container(
+        width: double.infinity,
+        height: 50,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: UberColors.error.withOpacity(0.5),
+            width: 1,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () async {
+              await signUserOut();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const AuthWrapper()),
+              );
+            },
+            child: const Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.logout_rounded,
+                    color: UberColors.error,
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Log Out',
+                    style: TextStyle(
+                      color: UberColors.error,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

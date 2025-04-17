@@ -269,11 +269,11 @@ class _GroupsPageState extends State<GroupsPage> {
           // Header with back button and group name
           Container(
             color: Colors.blue,
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () {
                     setState(() {
                       selectedGroup = null;
@@ -286,7 +286,7 @@ class _GroupsPageState extends State<GroupsPage> {
                       Expanded(
                         child: Text(
                           selectedGroup!.name,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -295,7 +295,7 @@ class _GroupsPageState extends State<GroupsPage> {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.edit, color: Colors.white),
+                        icon: const Icon(Icons.edit, color: Colors.white),
                         onPressed: () {
                           _showEditGroupNameDialog();
                         },
@@ -307,65 +307,69 @@ class _GroupsPageState extends State<GroupsPage> {
             ),
           ),
 
+          SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+
           // Group members list
           Expanded(
-            child: Stack(
-              children: [
-                ListView.builder(
-                  padding: EdgeInsets.all(16),
-                  itemCount: selectedGroup!.members.length +
-                      1, // +1 for the "Add Person" button
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      // Add Person button at the top
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: OutlinedButton.icon(
-                          icon: Icon(Icons.person_add),
-                          label: Text('Add Person'),
-                          style: OutlinedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          onPressed: () {
-                            _showAddPersonDialog();
-                          },
-                        ),
-                      );
-                    }
-
-                    final member = selectedGroup!.members[index - 1];
-                    return _buildMemberListItem(member);
-                  },
-                ),
-
-                // Create Schedule button at the bottom
-                Positioned(
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
-                  child: ElevatedButton.icon(
-                    icon: Icon(Icons.calendar_today),
-                    label: Text('Create Schedule'),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 15),
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      elevation: 5,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+            child: ListView.builder(
+              padding: EdgeInsets.fromLTRB(
+                  16, 0, 16, MediaQuery.of(context).padding.bottom + 80),
+              itemCount: selectedGroup!.members.length +
+                  2, // Add Person + Create Schedule
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  // Add Person button
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.person_add),
+                      label: const Text('Add Person'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
+                      onPressed: () {
+                        _showAddPersonDialog();
+                      },
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SchedulerForm(),
+                  );
+                } else if (index == selectedGroup!.members.length + 1) {
+                  // Create Schedule button at the bottom
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      top: 16.0,
+                      bottom: MediaQuery.of(context).padding.bottom + 16,
+                    ),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.calendar_today),
+                      label: const Text('Create Schedule'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        elevation: 5,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const GroupSchedulerForm(),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }
+
+                // Group member
+                final member = selectedGroup!.members[index - 1];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: _buildMemberListItem(member),
+                );
+              },
             ),
           ),
         ],
