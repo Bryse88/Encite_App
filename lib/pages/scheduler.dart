@@ -2,84 +2,84 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:encite/models/activity.dart';
+import 'package:encite/models/schedule.dart';
 
 // Models
-class Activity {
-  final String id;
-  final String title;
-  final String description;
-  final DateTime startTime;
-  final DateTime endTime;
-  final double price;
-  final String imageUrl;
+// class Activity {
+//   final String id;
+//   final String title;
+//   final String description;
+//   final DateTime startTime;
+//   final DateTime endTime;
+//   final double price;
+//   final String imageUrl;
 
-  Activity({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.startTime,
-    required this.endTime,
-    required this.price,
-    required this.imageUrl,
-  });
+//   Activity({
+//     required this.id,
+//     required this.title,
+//     required this.description,
+//     required this.startTime,
+//     required this.endTime,
+//     required this.price,
+//     required this.imageUrl,
+//   });
 
-  Activity copyWith({
-    String? id,
-    String? title,
-    String? description,
-    DateTime? startTime,
-    DateTime? endTime,
-    double? price,
-    String? imageUrl,
-  }) {
-    return Activity(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
-      price: price ?? this.price,
-      imageUrl: imageUrl ?? this.imageUrl,
-    );
-  }
-}
+//   Activity copyWith({
+//     String? id,
+//     String? title,
+//     String? description,
+//     DateTime? startTime,
+//     DateTime? endTime,
+//     double? price,
+//     String? imageUrl,
+//   }) {
+//     return Activity(
+//       id: id ?? this.id,
+//       title: title ?? this.title,
+//       description: description ?? this.description,
+//       startTime: startTime ?? this.startTime,
+//       endTime: endTime ?? this.endTime,
+//       price: price ?? this.price,
+//       imageUrl: imageUrl ?? this.imageUrl,
+//     );
+//   }
+// }
 
-class Schedule {
-  final String id;
-  final List<Activity> activities;
-  final DateTime createdAt;
+// class Schedule {
+//   final String id;
+//   final List<Activity> activities;
+//   final DateTime createdAt;
 
-  Schedule({
-    required this.id,
-    required this.activities,
-    required this.createdAt,
-  });
+//   Schedule({
+//     required this.id,
+//     required this.activities,
+//     required this.createdAt,
+//   });
 
-  double get totalCost =>
-      activities.fold(0, (sum, activity) => sum + activity.price);
+//   double get totalCost =>
+//       activities.fold(0, (sum, activity) => sum + activity.price);
 
-  DateTime get startTime => activities.isNotEmpty
-      ? activities
-          .map((a) => a.startTime)
-          .reduce((a, b) => a.isBefore(b) ? a : b)
-      : DateTime.now();
+//   DateTime get startTime => activities.isNotEmpty
+//       ? activities
+//           .map((a) => a.startTime)
+//           .reduce((a, b) => a.isBefore(b) ? a : b)
+//       : DateTime.now();
 
-  DateTime get endTime => activities.isNotEmpty
-      ? activities.map((a) => a.endTime).reduce((a, b) => a.isAfter(b) ? a : b)
-      : DateTime.now();
+//   DateTime get endTime => activities.isNotEmpty
+//       ? activities.map((a) => a.endTime).reduce((a, b) => a.isAfter(b) ? a : b)
+//       : DateTime.now();
 
-  String get timeFrame {
-    final timeFormat = DateFormat('h:mm a');
-    return '${timeFormat.format(startTime)} – ${timeFormat.format(endTime)}';
-  }
-}
+//   String get timeFrame {
+//     final timeFormat = DateFormat('h:mm a');
+//     return '${timeFormat.format(startTime)} – ${timeFormat.format(endTime)}';
+//   }
+// }
 
-// Service to interact with the backend API
 class ScheduleService {
   Future<Activity> requestSubstituteActivity(
       String activityId, Schedule schedule) async {
-    // In a real app, you would make an API call to your backend
-    // For now, we'll simulate a delay and return a mock substitute activity
+    // Replace this mock with real API call later
     await Future.delayed(const Duration(seconds: 1));
 
     return Activity(
@@ -89,16 +89,17 @@ class ScheduleService {
       startTime: DateTime.now().add(const Duration(hours: 1)),
       endTime: DateTime.now().add(const Duration(hours: 2)),
       price: 35.99,
-      imageUrl: 'https://picsum.photos/200',
+      imageUrl: 'https://picsum.photos/200?random=123',
     );
   }
 
   Future<void> saveSchedule(Schedule schedule) async {
-    // Save to Firebase
-    await FirebaseFirestore.instance
-        .collection('schedules')
-        .doc(schedule.id)
-        .set({
+    final docRef =
+        FirebaseFirestore.instance.collection('schedules').doc(schedule.id);
+
+    await docRef.set({
+      'id': schedule.id,
+      'createdAt': schedule.createdAt.toIso8601String(),
       'activities': schedule.activities
           .map((a) => {
                 'id': a.id,
@@ -110,7 +111,6 @@ class ScheduleService {
                 'imageUrl': a.imageUrl,
               })
           .toList(),
-      'createdAt': schedule.createdAt.toIso8601String(),
     });
   }
 }
@@ -502,73 +502,6 @@ class _ActivityCardState extends State<ActivityCard> {
           ],
         ),
       ),
-    );
-  }
-}
-
-// Example usage
-class ExampleApp extends StatelessWidget {
-  const ExampleApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    // Generate example schedule
-    final now = DateTime.now();
-    final schedule = Schedule(
-      id: 'example_schedule',
-      activities: [
-        Activity(
-          id: '1',
-          title: 'Brunch at Coastal Kitchen',
-          description:
-              'Enjoy a relaxed brunch with seasonal ingredients and a menu that changes weekly. Great for groups and they have vegetarian options.',
-          startTime: now.add(const Duration(hours: 1)),
-          endTime: now.add(const Duration(hours: 2, minutes: 30)),
-          price: 45.99,
-          imageUrl: 'https://picsum.photos/id/1/400/300',
-        ),
-        Activity(
-          id: '2',
-          title: 'Visit Modern Art Museum',
-          description:
-              'Explore the latest exhibition featuring contemporary artists from around the world. The museum also has a beautiful rooftop garden with city views.',
-          startTime: now.add(const Duration(hours: 3)),
-          endTime: now.add(const Duration(hours: 5)),
-          price: 24.50,
-          imageUrl: 'https://picsum.photos/id/2/400/300',
-        ),
-        Activity(
-          id: '3',
-          title: 'Craft Cocktail Workshop',
-          description:
-              'Learn how to make three signature cocktails with a professional mixologist. All ingredients and equipment provided.',
-          startTime: now.add(const Duration(hours: 5, minutes: 30)),
-          endTime: now.add(const Duration(hours: 7)),
-          price: 65.00,
-          imageUrl: 'https://picsum.photos/id/3/400/300',
-        ),
-      ],
-      createdAt: now,
-    );
-
-    return MaterialApp(
-      title: 'Encite',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E88E5),
-          brightness: Brightness.light,
-        ),
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E88E5),
-          brightness: Brightness.dark,
-        ),
-      ),
-      themeMode: ThemeMode.system,
-      home: SchedulePresentationPage(schedule: schedule),
     );
   }
 }

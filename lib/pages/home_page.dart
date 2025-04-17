@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:encite/pages/friends/AddFriendScreen.dart';
 import 'package:encite/pages/solo_scheduler_form.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -410,9 +411,9 @@ class _HomePageState extends State<HomePage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    _buildAddGroupWidget(),
-                    const SizedBox(height: 24),
                     _buildAddSingleWidget(),
+                    const SizedBox(height: 24),
+                    _buildAddGroupWidget(),
                     const SizedBox(height: 24),
                     _buildAvailableFriendsWidget(),
                     const SizedBox(height: 24),
@@ -660,7 +661,7 @@ class _HomePageState extends State<HomePage>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const SoloSchedulerForm(),
+              builder: (context) => GroupsPage(),
             ),
           );
         },
@@ -680,12 +681,12 @@ class _HomePageState extends State<HomePage>
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'Create Solo Schedule',
+                    'Create Group Schedule',
                     style: TextStyle(
                       color: UberColors.textPrimary,
                       fontWeight: FontWeight.w600,
@@ -695,7 +696,7 @@ class _HomePageState extends State<HomePage>
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Create a schedule for yourself',
+                    'Create a schedule with a group',
                     style: TextStyle(
                       color: UberColors.textSecondary,
                       fontSize: 13,
@@ -732,7 +733,7 @@ class _HomePageState extends State<HomePage>
       child: InkWell(
         onTap: () {
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => GroupsPage()),
+            MaterialPageRoute(builder: (context) => const SoloSchedulerForm()),
           );
         },
         child: Row(
@@ -751,12 +752,12 @@ class _HomePageState extends State<HomePage>
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'Create Group Schedule',
+                    'Create Solo Schedule',
                     style: TextStyle(
                       color: UberColors.textPrimary,
                       fontWeight: FontWeight.w600,
@@ -766,7 +767,7 @@ class _HomePageState extends State<HomePage>
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Create a schedule with a group',
+                    'Create a schedule for yourself',
                     style: TextStyle(
                       color: UberColors.textSecondary,
                       fontSize: 13,
@@ -820,10 +821,10 @@ class _HomePageState extends State<HomePage>
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'Add Friends',
                     style: TextStyle(
@@ -872,10 +873,10 @@ class _HomePageState extends State<HomePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Available Friends',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -884,10 +885,18 @@ class _HomePageState extends State<HomePage>
                   letterSpacing: -0.5,
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: UberColors.textSecondary,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddFriendPage()),
+                  );
+                },
+                child: const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: UberColors.textSecondary,
+                ),
               ),
             ],
           ),

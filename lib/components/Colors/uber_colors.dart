@@ -10,4 +10,6 @@ class UberColors {
   static const Color accent = Color(0xFF15D071); // Success green
   static const Color divider = Color(0xFF2A2A2A); // Dark gray divider
   static const Color error = Color(0xFFE51919); // Error/alert red
+  static const Color cardBackground =
+      Color(0xFF1E1E1E); // Make sure this is defined
 }
