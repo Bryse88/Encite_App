@@ -115,6 +115,7 @@ class _ProfilePageState extends State<ProfilePage>
             )
           : Stack(
               children: [
+                // Animated background
                 AnimatedBuilder(
                   animation: _animationController,
                   builder: (context, child) {
@@ -124,9 +125,11 @@ class _ProfilePageState extends State<ProfilePage>
                     );
                   },
                 ),
+                // Content
                 SafeArea(
                   child: Column(
                     children: [
+                      // Header with title and settings button
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
@@ -136,7 +139,7 @@ class _ProfilePageState extends State<ProfilePage>
                               'Profile',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 20,
+                                fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -156,19 +159,158 @@ class _ProfilePageState extends State<ProfilePage>
                           ],
                         ),
                       ),
-                      buildProfileHeader(userData!),
-                      const SizedBox(height: 20),
-                      buildImpalerBar(),
-                      const SizedBox(height: 20),
-                      buildIdentityTags(userData!),
-                      const SizedBox(height: 24),
-                      Expanded(child: buildRecentActivity(userData1)),
-                      buildLogoutButton(context),
+
+                      // Scrollable content
+                      Expanded(
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Column(
+                            children: [
+                              // Profile header (avatar, name, stats)
+                              buildProfileHeader(userData!),
+                              const SizedBox(height: 20),
+                              // Impaler bar (visual element)
+                              buildImpalerBar(),
+                              const SizedBox(height: 20),
+                              // Identity tags section
+                              buildIdentityTags(userData!),
+                              const SizedBox(height: 24),
+                              // Recent activity section with proper padding
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Display recent activity list without Expanded
+                                    Container(
+                                      // Use fixed height instead of Expanded
+                                      constraints: const BoxConstraints(
+                                        minHeight:
+                                            200, // Minimum height for content
+                                        maxHeight:
+                                            400, // Maximum height before scrolling
+                                      ),
+                                      child:
+                                          buildRecentActivityFixed(userData1),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // Logout button
+                              buildLogoutButton(context),
+                              // Add some padding at the bottom
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
+    );
+  }
+
+  // Modified version of recent activity that doesn't use Expanded
+  Widget buildRecentActivityFixed(Map<String, dynamic> userData) {
+    final recentActivity = userData['recentActivity'] as List<dynamic>;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min, // Important: don't try to take all space
+      children: [
+        const Text(
+          'Recent Activity',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Use ListView.builder directly
+        ListView.builder(
+          shrinkWrap: true, // Important: wrap content, don't expand
+          physics:
+              const NeverScrollableScrollPhysics(), // Don't allow this ListView to scroll
+          itemCount: recentActivity.length,
+          itemBuilder: (context, index) {
+            final activity = recentActivity[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildActivityIcon(activity['type']),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          activity['title'],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          activity['time'],
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivityIcon(String type) {
+    IconData iconData;
+    Color iconColor;
+
+    switch (type) {
+      case 'Event':
+        iconData = Icons.event;
+        iconColor = Colors.blue;
+        break;
+      case 'Chat':
+        iconData = Icons.chat_bubble;
+        iconColor = Colors.green;
+        break;
+      case 'Schedule':
+        iconData = Icons.calendar_today;
+        iconColor = Colors.orange;
+        break;
+      default:
+        iconData = Icons.circle;
+        iconColor = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: iconColor.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        iconData,
+        color: iconColor,
+        size: 18,
+      ),
     );
   }
 }

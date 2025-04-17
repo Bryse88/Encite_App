@@ -130,7 +130,7 @@ class _GroupsPageState extends State<GroupsPage> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
@@ -155,7 +155,7 @@ class _GroupsPageState extends State<GroupsPage> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             colors: [Color(0xFF1C1C1E), Color(0xFF2C2C2E)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

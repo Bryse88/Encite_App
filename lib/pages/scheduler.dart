@@ -1,945 +1,574 @@
-import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-class SchedulingPage extends StatefulWidget {
-  const SchedulingPage({Key? key}) : super(key: key);
+// Models
+class Activity {
+  final String id;
+  final String title;
+  final String description;
+  final DateTime startTime;
+  final DateTime endTime;
+  final double price;
+  final String imageUrl;
 
-  @override
-  State<SchedulingPage> createState() => _SchedulingPageState();
+  Activity({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.startTime,
+    required this.endTime,
+    required this.price,
+    required this.imageUrl,
+  });
+
+  Activity copyWith({
+    String? id,
+    String? title,
+    String? description,
+    DateTime? startTime,
+    DateTime? endTime,
+    double? price,
+    String? imageUrl,
+  }) {
+    return Activity(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      price: price ?? this.price,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
 }
 
-class _SchedulingPageState extends State<SchedulingPage>
-    with SingleTickerProviderStateMixin {
-  int _selectedViewIndex = 0;
-  late TabController _tabController;
+class Schedule {
+  final String id;
+  final List<Activity> activities;
+  final DateTime createdAt;
 
-  // Sample event data
-  final List<ScheduleEvent> _events = [
-    ScheduleEvent(
-      title: '🍔 Lunch with Team',
-      time: '12:30 PM',
-      duration: 60,
-      color: const Color(0xFFFF9500),
-    ),
-    ScheduleEvent(
-      title: '📚 Study Session',
-      time: '2:00 PM',
-      duration: 90,
-      color: const Color(0xFF5AC8FA),
-    ),
-    ScheduleEvent(
-      title: '🧘 Mindfulness Break',
-      time: '3:30 PM',
-      duration: 15,
-      color: const Color(0xFF4CD964),
-    ),
-    ScheduleEvent(
-      title: '🏃 Gym Workout',
-      time: '5:00 PM',
-      duration: 60,
-      color: const Color(0xFFFF2D55),
-    ),
-    ScheduleEvent(
-      title: '💼 Weekly Planning',
-      time: '6:30 PM',
-      duration: 45,
-      color: const Color(0xFF5856D6),
-    ),
-    ScheduleEvent(
-      title: '🎮 Gaming Time',
-      time: '8:00 PM',
-      duration: 120,
-      color: const Color(0xFFAF52DE),
-    ),
-  ];
+  Schedule({
+    required this.id,
+    required this.activities,
+    required this.createdAt,
+  });
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _selectedViewIndex = _tabController.index;
-      });
+  double get totalCost =>
+      activities.fold(0, (sum, activity) => sum + activity.price);
+
+  DateTime get startTime => activities.isNotEmpty
+      ? activities
+          .map((a) => a.startTime)
+          .reduce((a, b) => a.isBefore(b) ? a : b)
+      : DateTime.now();
+
+  DateTime get endTime => activities.isNotEmpty
+      ? activities.map((a) => a.endTime).reduce((a, b) => a.isAfter(b) ? a : b)
+      : DateTime.now();
+
+  String get timeFrame {
+    final timeFormat = DateFormat('h:mm a');
+    return '${timeFormat.format(startTime)} – ${timeFormat.format(endTime)}';
+  }
+}
+
+// Service to interact with the backend API
+class ScheduleService {
+  Future<Activity> requestSubstituteActivity(
+      String activityId, Schedule schedule) async {
+    // In a real app, you would make an API call to your backend
+    // For now, we'll simulate a delay and return a mock substitute activity
+    await Future.delayed(const Duration(seconds: 1));
+
+    return Activity(
+      id: 'substitute_$activityId',
+      title: 'Substitute Activity',
+      description: 'This is a substitute activity recommended by our AI.',
+      startTime: DateTime.now().add(const Duration(hours: 1)),
+      endTime: DateTime.now().add(const Duration(hours: 2)),
+      price: 35.99,
+      imageUrl: 'https://picsum.photos/200',
+    );
+  }
+
+  Future<void> saveSchedule(Schedule schedule) async {
+    // Save to Firebase
+    await FirebaseFirestore.instance
+        .collection('schedules')
+        .doc(schedule.id)
+        .set({
+      'activities': schedule.activities
+          .map((a) => {
+                'id': a.id,
+                'title': a.title,
+                'description': a.description,
+                'startTime': a.startTime.toIso8601String(),
+                'endTime': a.endTime.toIso8601String(),
+                'price': a.price,
+                'imageUrl': a.imageUrl,
+              })
+          .toList(),
+      'createdAt': schedule.createdAt.toIso8601String(),
     });
   }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Background gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF1A1A1A),
-                  Colors.black,
-                ],
-              ),
-            ),
-          ),
-
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios,
-                            color: Colors.white),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      const Text(
-                        'Schedule',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF007AFF),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 12.0, vertical: 6.0),
-                          child: Row(
-                            children: [
-                              Icon(Icons.auto_fix_high,
-                                  color: Colors.white, size: 16),
-                              SizedBox(width: 4),
-                              Text(
-                                'AI Optimize',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // View selection tabs
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(25),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: TabBar(
-                          controller: _tabController,
-                          indicator: BoxDecoration(
-                            borderRadius: BorderRadius.circular(25),
-                            color: const Color(0xFF007AFF),
-                          ),
-                          labelColor: Colors.white,
-                          unselectedLabelColor: Colors.white.withOpacity(0.5),
-                          labelStyle: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          tabs: const [
-                            Tab(text: 'Prize Wheel'),
-                            Tab(text: 'Orbit View'),
-                            Tab(text: 'Standard'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Different schedule views
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      // Prize Wheel View
-                      PrizeWheelView(events: _events),
-
-                      // Orbit View
-                      OrbitView(events: _events),
-
-                      // Standard View
-                      StandardView(events: _events),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Bottom navigation bar with blur effect
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  height: 70,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    border: Border(
-                      top: BorderSide(
-                        color: Colors.white.withOpacity(0.1),
-                        width: 0.5,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildNavBarItem(Icons.home_outlined, 'Home'),
-                      _buildNavBarItem(Icons.schedule, 'Schedule',
-                          isActive: true),
-                      _buildNavBarItem(Icons.chat_bubble_outline, 'Chats'),
-                      _buildNavBarItem(Icons.person_outline, 'Profile'),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF007AFF),
-        child: const Icon(Icons.add, color: Colors.white),
-        onPressed: () {
-          // Add new event
-        },
-      ),
-    );
-  }
-
-  Widget _buildNavBarItem(IconData icon, String label,
-      {bool isActive = false}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? const Color(0xFF007AFF) : Colors.white,
-          size: 26,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive
-                ? const Color(0xFF007AFF)
-                : Colors.white.withOpacity(0.8),
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-// Prize Wheel View
-class PrizeWheelView extends StatelessWidget {
-  final List<ScheduleEvent> events;
+// The main schedule presentation page
+class SchedulePresentationPage extends StatefulWidget {
+  final Schedule schedule;
 
-  const PrizeWheelView({Key? key, required this.events}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Today's date
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Text(
-                  'Today, Mar 23',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Prize wheel visualization
-        Expanded(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Central bar
-              Container(
-                height: 4,
-                width: double.infinity,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF007AFF),
-                  borderRadius: BorderRadius.circular(2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF007AFF).withOpacity(0.5),
-                      blurRadius: 10,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Rotating wheel of events
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.6,
-                child: ListWheelScrollView.useDelegate(
-                  itemExtent: 120,
-                  perspective: 0.005,
-                  diameterRatio: 2.0,
-                  physics: const FixedExtentScrollPhysics(),
-                  childDelegate: ListWheelChildBuilderDelegate(
-                    childCount: events.length,
-                    builder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 32.0),
-                        child: _buildPrizeWheelItem(events[index]),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPrizeWheelItem(ScheduleEvent event) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                event.color.withOpacity(0.4),
-                event.color.withOpacity(0.2),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: event.color.withOpacity(0.3),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: event.color.withOpacity(0.3),
-                blurRadius: 10,
-                spreadRadius: 0,
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                const SizedBox(width: 8),
-                // Time column
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      event.time,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '${event.duration}min',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 20),
-                // Vertical divider
-                Container(
-                  height: 50,
-                  width: 1,
-                  color: Colors.white.withOpacity(0.2),
-                ),
-                const SizedBox(width: 20),
-                // Event details
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        event.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Orbit View
-class OrbitView extends StatefulWidget {
-  final List<ScheduleEvent> events;
-
-  const OrbitView({Key? key, required this.events}) : super(key: key);
+  const SchedulePresentationPage({Key? key, required this.schedule})
+      : super(key: key);
 
   @override
-  State<OrbitView> createState() => _OrbitViewState();
+  State<SchedulePresentationPage> createState() =>
+      _SchedulePresentationPageState();
 }
 
-class _OrbitViewState extends State<OrbitView>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+class _SchedulePresentationPageState extends State<SchedulePresentationPage> {
+  late Schedule _schedule;
+  final _scheduleService = ScheduleService();
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 50),
-    )..repeat();
+    _schedule = widget.schedule;
   }
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+  Future<void> _saveSchedule() async {
+    setState(() {
+      _isLoading = true;
+    });
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Today's date
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Text(
-                  'Today, Mar 23',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Orbit visualization
-        Expanded(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Central bar
-              Container(
-                height: 4,
-                width: double.infinity,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF007AFF),
-                  borderRadius: BorderRadius.circular(2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF007AFF).withOpacity(0.5),
-                      blurRadius: 10,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Orbiting events
-              ...List.generate(widget.events.length, (index) {
-                // Distribute events along the timeline
-                final timePosition =
-                    (index / (widget.events.length - 1)) * 0.8 + 0.1;
-
-                // Alternate above and below the axis
-                final isAbove = index % 2 == 0;
-                final verticalOffset = isAbove ? -0.15 : 0.15;
-
-                // Create animation for orbit effect
-                final animation = Tween(
-                  begin: verticalOffset - 0.05,
-                  end: verticalOffset + 0.05,
-                ).animate(
-                  CurvedAnimation(
-                    parent: _animationController,
-                    curve: Interval(
-                      (index / widget.events.length),
-                      (index / widget.events.length) + 0.1,
-                      curve: Curves.easeInOut,
-                    ),
-                  ),
-                );
-
-                return AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Positioned(
-                      left: MediaQuery.of(context).size.width * timePosition,
-                      top: MediaQuery.of(context).size.height *
-                          (0.5 + animation.value),
-                      child: _buildOrbitItem(widget.events[index], isAbove),
-                    );
-                  },
-                );
-              }),
-
-              // Time indicators on the axis
-              Positioned(
-                bottom: MediaQuery.of(context).size.height * 0.45,
-                left: MediaQuery.of(context).size.width * 0.1,
-                child: _buildTimeIndicator('9 AM'),
-              ),
-              Positioned(
-                bottom: MediaQuery.of(context).size.height * 0.45,
-                left: MediaQuery.of(context).size.width * 0.35,
-                child: _buildTimeIndicator('12 PM'),
-              ),
-              Positioned(
-                bottom: MediaQuery.of(context).size.height * 0.45,
-                left: MediaQuery.of(context).size.width * 0.6,
-                child: _buildTimeIndicator('3 PM'),
-              ),
-              Positioned(
-                bottom: MediaQuery.of(context).size.height * 0.45,
-                right: MediaQuery.of(context).size.width * 0.1,
-                child: _buildTimeIndicator('6 PM'),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTimeIndicator(String time) {
-    return Column(
-      children: [
-        Container(
-          height: 12,
-          width: 1,
-          color: Colors.white.withOpacity(0.5),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          time,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOrbitItem(ScheduleEvent event, bool isAbove) {
-    return Transform.rotate(
-      angle: isAbove ? -0.1 : 0.1,
-      child: Container(
-        width: 130,
-        height: 100,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              event.color.withOpacity(0.4),
-              event.color.withOpacity(0.2),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: event.color.withOpacity(0.3),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: event.color.withOpacity(0.3),
-              blurRadius: 10,
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    event.time,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    event.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: event.color.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${event.duration}min',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Standard View
-class StandardView extends StatelessWidget {
-  final List<ScheduleEvent> events;
-
-  const StandardView({Key? key, required this.events}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Date selection
-        SizedBox(
-          height: 80,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: 7,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemBuilder: (context, index) {
-              final day = DateTime.now().add(Duration(days: index));
-              final isToday = index == 0;
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: _buildDateItem(day, isSelected: isToday),
-              );
-            },
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // Timeline
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: events.length,
-            itemBuilder: (context, index) {
-              final isFirst = index == 0;
-              final isLast = index == events.length - 1;
-
-              return _buildTimelineItem(
-                event: events[index],
-                isFirst: isFirst,
-                isLast: isLast,
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateItem(DateTime date, {bool isSelected = false}) {
-    final dayName = _getDayName(date.weekday);
-
-    return Container(
-      width: 60,
-      decoration: BoxDecoration(
-        color: isSelected
-            ? const Color(0xFF007AFF)
-            : Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            dayName,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${date.day}',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: isSelected ? 18 : 16,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getDayName(int weekday) {
-    switch (weekday) {
-      case 1:
-        return 'Mon';
-      case 2:
-        return 'Tue';
-      case 3:
-        return 'Wed';
-      case 4:
-        return 'Thu';
-      case 5:
-        return 'Fri';
-      case 6:
-        return 'Sat';
-      case 7:
-        return 'Sun';
-      default:
-        return '';
+    try {
+      await _scheduleService.saveSchedule(_schedule);
+      // Show success message or navigate away
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Schedule saved successfully!')));
+      Navigator.pop(context, _schedule);
+    } catch (e) {
+      // Show error message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to save schedule: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  Widget _buildTimelineItem({
-    required ScheduleEvent event,
-    required bool isFirst,
-    required bool isLast,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Time and timeline
-        Column(
-          children: [
-            Text(
-              event.time,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: event.color,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: event.color.withOpacity(0.5),
-                    blurRadius: 6,
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 2,
-              height: 90,
-              color:
-                  isLast ? Colors.transparent : Colors.white.withOpacity(0.2),
-            ),
-          ],
-        ),
+  void _discardSchedule() {
+    Navigator.pop(context);
+  }
 
-        const SizedBox(width: 16),
+  Future<void> _requestSubstituteActivity(int index) async {
+    setState(() {
+      _isLoading = true;
+    });
 
-        // Event card
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        event.color.withOpacity(0.3),
-                        event.color.withOpacity(0.1),
+    try {
+      final activity = _schedule.activities[index];
+      final substitute = await _scheduleService.requestSubstituteActivity(
+          activity.id, _schedule);
+
+      setState(() {
+        final newActivities = List<Activity>.from(_schedule.activities);
+        newActivities[index] = substitute;
+        _schedule = Schedule(
+          id: _schedule.id,
+          activities: newActivities,
+          createdAt: _schedule.createdAt,
+        );
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to get substitute activity: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Your Schedule', style: theme.textTheme.titleLarge),
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                // Main content
+                CustomScrollView(
+                  slivers: [
+                    // Header with total cost and time frame
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Total cost
+                            Row(
+                              children: [
+                                Text(
+                                  'Total Cost',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  '\$${_schedule.totalCost.toStringAsFixed(2)}',
+                                  style:
+                                      theme.textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Time frame
+                            Row(
+                              children: [
+                                Text(
+                                  'Time Frame',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  _schedule.timeFrame,
+                                  style: theme.textTheme.bodyLarge,
+                                ),
+                              ],
+                            ),
+
+                            const Divider(height: 32),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Activity list
+                    SliverPadding(
+                      padding: const EdgeInsets.only(
+                          bottom: 100), // Space for bottom buttons
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final activity = _schedule.activities[index];
+                            return ActivityCard(
+                              activity: activity,
+                              onDelete: () => _requestSubstituteActivity(index),
+                              isDarkMode: isDarkMode,
+                            );
+                          },
+                          childCount: _schedule.activities.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Bottom buttons
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.scaffoldBackgroundColor,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, -4),
+                        ),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: event.color.withOpacity(0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          event.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _discardSchedule,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDarkMode
+                                  ? Colors.grey[800]
+                                  : Colors.grey[200],
+                              foregroundColor:
+                                  isDarkMode ? Colors.white : Colors.black87,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Text('Discard'),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: event.color.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${event.duration} min',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _saveSchedule,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                             ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.more_horiz,
-                                  color: Colors.white),
-                              onPressed: () {},
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
+                            child: const Text('Save Schedule'),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ),
-        ),
-      ],
     );
   }
 }
 
-class ScheduleEvent {
-  final String title;
-  final String time;
-  final int duration;
-  final Color color;
+// Activity card component
+class ActivityCard extends StatefulWidget {
+  final Activity activity;
+  final VoidCallback onDelete;
+  final bool isDarkMode;
 
-  ScheduleEvent({
-    required this.title,
-    required this.time,
-    required this.duration,
-    required this.color,
-  });
+  const ActivityCard({
+    Key? key,
+    required this.activity,
+    required this.onDelete,
+    required this.isDarkMode,
+  }) : super(key: key);
+
+  @override
+  State<ActivityCard> createState() => _ActivityCardState();
+}
+
+class _ActivityCardState extends State<ActivityCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final timeFormat = DateFormat('h:mm a');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        color: widget.isDarkMode ? Colors.grey[850] : Colors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+              child: CachedNetworkImage(
+                imageUrl: widget.activity.imageUrl,
+                height: 150,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  height: 150,
+                  width: double.infinity,
+                  color: Colors.grey[300],
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  height: 150,
+                  width: double.infinity,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.error),
+                ),
+              ),
+            ),
+
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title and delete button
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.activity.title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        tooltip: 'Request substitute activity',
+                        onPressed: widget.onDelete,
+                      ),
+                    ],
+                  ),
+
+                  // Time range
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${timeFormat.format(widget.activity.startTime)} - ${timeFormat.format(widget.activity.endTime)}',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // Price
+                  Row(
+                    children: [
+                      const Icon(Icons.attach_money, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '\$${widget.activity.price.toStringAsFixed(2)}',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Description (expandable)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isExpanded = !_isExpanded;
+                      });
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Description',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _isExpanded
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                        if (_isExpanded) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.activity.description,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Example usage
+class ExampleApp extends StatelessWidget {
+  const ExampleApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Generate example schedule
+    final now = DateTime.now();
+    final schedule = Schedule(
+      id: 'example_schedule',
+      activities: [
+        Activity(
+          id: '1',
+          title: 'Brunch at Coastal Kitchen',
+          description:
+              'Enjoy a relaxed brunch with seasonal ingredients and a menu that changes weekly. Great for groups and they have vegetarian options.',
+          startTime: now.add(const Duration(hours: 1)),
+          endTime: now.add(const Duration(hours: 2, minutes: 30)),
+          price: 45.99,
+          imageUrl: 'https://picsum.photos/id/1/400/300',
+        ),
+        Activity(
+          id: '2',
+          title: 'Visit Modern Art Museum',
+          description:
+              'Explore the latest exhibition featuring contemporary artists from around the world. The museum also has a beautiful rooftop garden with city views.',
+          startTime: now.add(const Duration(hours: 3)),
+          endTime: now.add(const Duration(hours: 5)),
+          price: 24.50,
+          imageUrl: 'https://picsum.photos/id/2/400/300',
+        ),
+        Activity(
+          id: '3',
+          title: 'Craft Cocktail Workshop',
+          description:
+              'Learn how to make three signature cocktails with a professional mixologist. All ingredients and equipment provided.',
+          startTime: now.add(const Duration(hours: 5, minutes: 30)),
+          endTime: now.add(const Duration(hours: 7)),
+          price: 65.00,
+          imageUrl: 'https://picsum.photos/id/3/400/300',
+        ),
+      ],
+      createdAt: now,
+    );
+
+    return MaterialApp(
+      title: 'Encite',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1E88E5),
+          brightness: Brightness.light,
+        ),
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1E88E5),
+          brightness: Brightness.dark,
+        ),
+      ),
+      themeMode: ThemeMode.system,
+      home: SchedulePresentationPage(schedule: schedule),
+    );
+  }
 }

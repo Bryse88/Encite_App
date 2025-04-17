@@ -1,166 +1,1625 @@
-// // import 'package:encite/components/background.dart';
-// // import 'package:flutter/material.dart';
-// // import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:encite/components/MainComponents/background_painter.dart';
+import 'package:encite/components/ProfileComponents/Widgets/favorite_categories.dart';
+import 'package:encite/components/ProfileComponents/Widgets/impaler_bar.dart';
+import 'package:encite/components/ProfileComponents/Widgets/logout_button.dart';
+import 'package:encite/components/ProfileComponents/Widgets/profile_header.dart';
+import 'package:encite/components/ProfileComponents/recent_activity.dart';
+import 'package:encite/components/Navigation/location_widget.dart';
+import 'package:encite/pages/group_page.dart';
+import 'package:encite/pages/messaging_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
-// // class HomePage extends StatelessWidget {
-// //   const HomePage({super.key});
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({Key? key}) : super(key: key);
 
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     ScreenUtil.init(context, designSize: const Size(360, 690));
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
 
-// //     return Background(
-// //       child: Scaffold(
-// //         backgroundColor: Colors.transparent,
-// //         appBar: AppBar(
-// //           backgroundColor: Colors.transparent,
-// //           elevation: 0,
-// //           actions: [
-// //             Padding(
-// //               padding: EdgeInsets.only(right: 20.w),
-// //               child: Text(
-// //                 'ENCITE',
-// //                 style: TextStyle(
-// //                   fontFamily: 'Kalam',
-// //                   fontSize: 24.sp,
-// //                   color: Color.fromARGB(221, 252, 252, 252),
-// //                   fontWeight: FontWeight.w800,
-// //                 ),
-// //               ),
-// //             ),
-// //           ],
-// //         ),
-// //         body: Column(
-// //           children: [
-// //             // Friends Tab
-// //             Container(
-// //               padding: EdgeInsets.all(16.w),
-// //               color: Colors.grey[200],
-// //               child: Row(
-// //                 children: [
-// //                   Icon(Icons.people, size: 24.w),
-// //                   SizedBox(width: 8.w),
-// //                   Text(
-// //                     'Friends',
-// //                     style: TextStyle(
-// //                       fontSize: 18.sp,
-// //                       fontWeight: FontWeight.w600,
-// //                     ),
-// //                   ),
-// //                 ],
-// //               ),
-// //             ),
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  Map<String, dynamic>? userData; // nullable to allow loading
 
-// //             // Buttons Section
-// //             Expanded(
-// //               child: Padding(
-// //                 padding: EdgeInsets.all(16.w),
-// //                 child: Column(
-// //                   children: [
-// //                     _buildButton('Create', Icons.add_circle_outline, () {}),
-// //                     SizedBox(height: 16.h),
-// //                     _buildButton('Join Event', Icons.group_add_outlined, () {}),
-// //                     SizedBox(height: 16.h),
-// //                     _buildButton('My Events', Icons.event, () {}),
-// //                     SizedBox(height: 16.h),
-// //                     _buildButton('Settings', Icons.settings, () {}),
-// //                   ],
-// //                 ),
-// //               ),
-// //             ),
-// //           ],
-// //         ),
-// //       ),
-// //     );
-// //   }
+  // Home Page related state
+  String _firstName = '';
+  bool _isLoading = true;
+  bool isAvailable = true;
 
-// //   Widget _buildButton(String text, IconData icon, VoidCallback onPressed) {
-// //     return SizedBox(
-// //       width: double.infinity,
-// //       child: ElevatedButton.icon(
-// //         onPressed: onPressed,
-// //         icon: Icon(icon),
-// //         label: Text(
-// //           text,
-// //           style: TextStyle(fontSize: 16.sp),
-// //         ),
-// //         style: ElevatedButton.styleFrom(
-// //           padding: EdgeInsets.symmetric(vertical: 16.h),
-// //           shape: RoundedRectangleBorder(
-// //             borderRadius: BorderRadius.circular(8),
-// //           ),
-// //         ),
-// //       ),
-// //     );
-// //   }
-// // }
-// // HOMEPAGE: Floating Apple Watch–Style Grid
-// import 'dart:ui';
-// import 'package:flutter/material.dart';
+  // MyDay related state properties
+  DateTime _selectedDate = DateTime.now();
+  final List<DateTime> _datesWithEvents = [
+    DateTime.now(),
+    DateTime.now().add(const Duration(days: 2)),
+    DateTime.now().add(const Duration(days: 5)),
+    DateTime.now().add(const Duration(days: 8)),
+    DateTime.now().add(const Duration(days: 15)),
+  ];
 
-// class HomePage extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.black,
-//       body: Stack(
-//         children: [
-//           // Background
-//           Positioned.fill(
-//             child: Container(
-//               decoration: BoxDecoration(
-//                 gradient: LinearGradient(
-//                   colors: [Colors.black, Colors.grey.shade900],
-//                   begin: Alignment.topLeft,
-//                   end: Alignment.bottomRight,
-//                 ),
-//               ),
-//             ),
-//           ),
+  final List<Map<String, dynamic>> _availableFriends = [
+    {
+      'name': 'Alex Johnson',
+      'avatar': 'https://i.pravatar.cc/150?img=1',
+      'status': 'Online',
+    },
+    {
+      'name': 'Sarah Williams',
+      'avatar': 'https://i.pravatar.cc/150?img=2',
+      'status': 'Away',
+    },
+    {
+      'name': 'Miguel Rodriguez',
+      'avatar': 'https://i.pravatar.cc/150?img=3',
+      'status': 'Online',
+    },
+    {
+      'name': 'Priya Patel',
+      'avatar': 'https://i.pravatar.cc/150?img=4',
+      'status': 'Busy',
+    },
+    {
+      'name': 'David Chen',
+      'avatar': 'https://i.pravatar.cc/150?img=5',
+      'status': 'Online',
+    },
+  ];
 
-//           // Floating Grid
-//           SafeArea(
-//             child: GridView.builder(
-//               padding: const EdgeInsets.all(20),
-//               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-//                 crossAxisCount: 3,
-//                 mainAxisSpacing: 20,
-//                 crossAxisSpacing: 20,
-//               ),
-//               itemCount: 9,
-//               itemBuilder: (context, index) {
-//                 return GestureDetector(
-//                   onTap: () {
-//                     // Navigate to feature
-//                   },
-//                   child: AnimatedScale(
-//                     scale: 1.0,
-//                     duration: Duration(milliseconds: 150),
-//                     child: Container(
-//                       decoration: BoxDecoration(
-//                         borderRadius: BorderRadius.circular(20),
-//                         color: Colors.white.withOpacity(0.05),
-//                         boxShadow: [
-//                           BoxShadow(
-//                             color: Colors.white.withOpacity(0.1),
-//                             blurRadius: 10,
-//                             spreadRadius: 1,
-//                             offset: Offset(0, 5),
-//                           ),
-//                         ],
-//                       ),
-//                       child: Center(
-//                         child: Icon(Icons.local_cafe_rounded,
-//                             color: Colors.white70),
-//                       ),
-//                     ),
-//                   ),
-//                 );
-//               },
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
+  final List<Map<String, dynamic>> _upcomingEvents = [
+    {
+      'isGroup': true,
+      'groupName': 'Study Group',
+      'title': 'Final Exam Prep',
+      'time': '3:30 PM - 5:00 PM',
+      'location': 'Library, Room 204',
+      'participants': 5,
+    },
+    {
+      'isGroup': false,
+      'title': 'Dentist Appointment',
+      'time': 'Tomorrow, 10:00 AM',
+      'location': 'Smile Dental Clinic',
+      'participants': 0,
+    },
+    {
+      'isGroup': true,
+      'groupName': 'Soccer Team',
+      'title': 'Weekly Practice',
+      'time': 'Saturday, 9:00 AM',
+      'location': 'Central Park Field',
+      'participants': 12,
+    },
+  ];
+
+  // Group Page related data
+  List<Group> groups = [
+    Group(
+      id: 1,
+      name: 'Brunch Club',
+      members: [
+        GroupMember(
+            id: 1,
+            name: 'Alex Johnson',
+            avatarUrl: 'https://i.pravatar.cc/150?img=1'),
+        GroupMember(
+            id: 2,
+            name: 'Sarah Williams',
+            avatarUrl: 'https://i.pravatar.cc/150?img=2'),
+        GroupMember(
+            id: 3,
+            name: 'Miguel Rodriguez',
+            avatarUrl: 'https://i.pravatar.cc/150?img=3'),
+      ],
+    ),
+    Group(
+      id: 2,
+      name: 'Hometown Friends',
+      members: [
+        GroupMember(
+            id: 1,
+            name: 'Alex Johnson',
+            avatarUrl: 'https://i.pravatar.cc/150?img=1'),
+        GroupMember(
+            id: 6,
+            name: 'Emma Wilson',
+            avatarUrl: 'https://i.pravatar.cc/150?img=6'),
+      ],
+    ),
+  ];
+
+  // Explore Page related data
+  List<SpecialItem> drinkSpecials = [
+    SpecialItem(
+      title: 'Mega Memosas',
+      location: 'SconnieBar',
+      price: '\$5',
+      imageUrl: 'https://i.pravatar.cc/150?img=20',
+      timeRange: '11:00 am - 12:00 am',
+    ),
+    SpecialItem(
+      title: 'Baca Balls',
+      location: 'SconniePub',
+      price: '\$7',
+      imageUrl: 'https://i.pravatar.cc/150?img=21',
+      timeRange: '11:00 am - 10:00 pm',
+    ),
+  ];
+
+  List<SpecialItem> foodSpecials = [
+    SpecialItem(
+      title: 'Burger Monday',
+      location: 'Grill House',
+      price: '\$8',
+      imageUrl: 'https://i.pravatar.cc/150?img=22',
+      timeRange: '11:00 am - 10:00 pm',
+    ),
+    SpecialItem(
+      title: 'Taco Tuesday',
+      location: 'Mexican Corner',
+      price: '\$2',
+      imageUrl: 'https://i.pravatar.cc/150?img=23',
+      timeRange: '5:00 pm - 10:00 pm',
+    ),
+  ];
+
+  // For tab control
+  int _currentTabIndex = 0;
+
+  final Map<String, dynamic> userData1 = {
+    'name': 'Alex Morgan',
+    'username': '@alexmorgan',
+    'email': 'alex.morgan@example.com',
+    'profileImage': 'https://i.pravatar.cc/300',
+    'favoriteCategories': [
+      'AI & Tech',
+      'Productivity',
+      'Health',
+      'Design',
+      'Travel',
+      'Photography',
+      'Music',
+      'Reading'
+    ],
+    'recentActivity': [
+      {'type': 'Event', 'title': 'Team Brainstorming', 'time': '2 hours ago'},
+      {
+        'type': 'Schedule',
+        'title': 'Updated work calendar',
+        'time': 'Yesterday'
+      },
+      {'type': 'Chat', 'title': 'Design Team Discussion', 'time': '2 days ago'},
+      {'type': 'Event', 'title': 'Product Meeting', 'time': '3 days ago'},
+      {
+        'type': 'Schedule',
+        'title': 'AI-optimized week plan',
+        'time': '5 days ago'
+      },
+    ]
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 20),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    fetchUserData();
+    _fetchUserName();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final uid = user.uid; // ✅ Keep this for reuse
+
+      // Fetch base user doc
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      // Fetch onboarding subcollection
+      final onboardingDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('onboarding')
+          .doc('identityTags')
+          .get();
+
+      final identityTags = onboardingDoc.exists
+          ? List<String>.from(onboardingDoc.data()?['tags'] ?? [])
+          : <String>[];
+
+      setState(() {
+        userData = {
+          'uid': uid,
+          ...?userDoc.data() as Map<String, dynamic>?,
+          'identityTags': identityTags,
+        };
+      });
+    } catch (e) {
+      print('Error fetching user data: $e');
+    }
+  }
+
+  Future<void> _fetchUserName() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedName = prefs.getString('cachedName');
+
+      if (cachedName != null && cachedName.isNotEmpty) {
+        setState(() {
+          _firstName = cachedName;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() {
+          _firstName = 'there';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists && userDoc.data() != null) {
+        final data = userDoc.data()!;
+        final fullName = data['name'] as String? ?? 'there';
+        final firstName = fullName.split(' ')[0];
+
+        await prefs.setString('cachedName', firstName);
+
+        setState(() {
+          _firstName = firstName;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _firstName = 'there';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching name: \$e');
+      setState(() {
+        _firstName = 'there';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> logAvailabilityStatus(bool status) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('statusLogs')
+          .add({
+        'status': status ? 'Free' : 'Busy',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  bool _hasEvent(DateTime date) {
+    return _datesWithEvents.any((eventDate) =>
+        eventDate.year == date.year &&
+        eventDate.month == date.month &&
+        eventDate.day == date.day);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: userData == null
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            )
+          : Stack(
+              children: [
+                AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: BackgroundPainter(_animationController.value),
+                      size: MediaQuery.of(context).size,
+                    );
+                  },
+                ),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _isLoading
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 120,
+                                    child: LinearProgressIndicator(
+                                      backgroundColor: Colors.white10,
+                                      color: Colors.white38,
+                                    ),
+                                  )
+                                : Text(
+                                    'Hey, $_firstName!',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                            buildAvailabilityToggle(),
+                          ],
+                        ),
+                      ),
+                      // Tab bar
+                      buildTabBar(),
+                      // Tab content (takes up the rest of the screen)
+                      Expanded(
+                        child: _buildTabContent(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        children: [
+          _buildTabButton(0, 'Home'),
+          _buildTabButton(1, 'Groups'),
+          _buildTabButton(2, 'Explore'),
+          _buildTabButton(3, 'Profile'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(int index, String title) {
+    final isSelected = _currentTabIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _currentTabIndex = index;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color:
+                isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabContent() {
+    switch (_currentTabIndex) {
+      case 0:
+        return _buildHomeTabContent();
+      case 1:
+        return _buildGroupsTabContent();
+      case 2:
+        return _buildExploreTabContent();
+      case 3:
+        return _buildProfileTabContent();
+      default:
+        return const SizedBox();
+    }
+  }
+
+  Widget buildAvailabilityToggle() {
+    return Row(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            gradient: LinearGradient(
+              colors: isAvailable
+                  ? [Color(0xFF007AFF), Color(0xFF5AC8FA)]
+                  : [Color(0xFFB0BEC5), Color(0xFF90A4AE)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 6,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () {
+              setState(() => isAvailable = !isAvailable);
+              logAvailabilityStatus(isAvailable);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isAvailable ? Icons.check_circle : Icons.do_not_disturb,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isAvailable ? 'Available' : 'Busy',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ChatsPage()),
+            );
+          },
+          child: Stack(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2A2A),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.message_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(color: Colors.black, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---- HOME TAB ----
+  Widget _buildHomeTabContent() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        bool isWideScreen = constraints.maxWidth > 800;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          physics: const BouncingScrollPhysics(),
+          child: isWideScreen
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left Column
+                    Expanded(
+                      flex: 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const LocationWidget(),
+                          const SizedBox(height: 20),
+                          _buildCalendarWidget(),
+                          const SizedBox(height: 20),
+                          _buildAddGroupWidget(),
+                          const SizedBox(height: 16),
+                          _buildAddFriendWidget(),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+
+                    // Right Column
+                    Expanded(
+                      flex: 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildAvailableFriendsWidget(),
+                          const SizedBox(height: 20),
+                          _buildUpcomingEventsWidget(),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    _buildAddGroupWidget(),
+                    const SizedBox(height: 20),
+                    _buildAddSingleWidget(),
+                    const SizedBox(height: 20),
+                    _buildAvailableFriendsWidget(),
+                    const SizedBox(height: 20),
+                    _buildCalendarWidget(),
+                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
+                    _buildUpcomingEventsWidget(),
+                  ],
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCalendarWidget() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                DateFormat('MMMM yyyy').format(_selectedDate),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios,
+                        size: 16, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        _selectedDate = DateTime(
+                            _selectedDate.year, _selectedDate.month - 1, 1);
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios,
+                        size: 16, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        _selectedDate = DateTime(
+                            _selectedDate.year, _selectedDate.month + 1, 1);
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Day labels (Mon, Tue, etc.)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                .map((day) => Text(
+                      day,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[400],
+                      ),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 10),
+
+          // Calendar grid
+          _buildCalendarGrid(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarGrid() {
+    // Get the first day of the selected month
+    final firstDay = DateTime(_selectedDate.year, _selectedDate.month, 1);
+
+    // Calculate days from previous month to display
+    // (e.g., if first day is Wednesday, we need to show Mon & Tue from previous month)
+    final daysFromPreviousMonth = (firstDay.weekday - 1) % 7;
+
+    // Calculate the total number of days in the selected month
+    final daysInMonth =
+        DateTime(_selectedDate.year, _selectedDate.month + 1, 0).day;
+
+    // Calculate the total days to display (including some from previous and next months)
+    // We always show 6 weeks (42 days)
+    const totalDaysToDisplay = 42;
+
+    // Generate all the dates to display
+    final displayDates = <DateTime>[];
+
+    // Add dates from previous month
+    if (daysFromPreviousMonth > 0) {
+      final lastMonthLastDay =
+          DateTime(_selectedDate.year, _selectedDate.month, 0).day;
+      for (int i = 0; i < daysFromPreviousMonth; i++) {
+        displayDates.add(
+          DateTime(_selectedDate.year, _selectedDate.month - 1,
+              lastMonthLastDay - daysFromPreviousMonth + i + 1),
+        );
+      }
+    }
+
+    // Add dates from current month
+    for (int i = 1; i <= daysInMonth; i++) {
+      displayDates.add(DateTime(_selectedDate.year, _selectedDate.month, i));
+    }
+
+    // Add dates from next month to fill the grid
+    final remainingDays = totalDaysToDisplay - displayDates.length;
+    for (int i = 1; i <= remainingDays; i++) {
+      displayDates
+          .add(DateTime(_selectedDate.year, _selectedDate.month + 1, i));
+    }
+
+    // Build the grid with 6 rows
+    return Column(
+      children: List.generate(6, (rowIndex) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(7, (colIndex) {
+              final index = rowIndex * 7 + colIndex;
+              final date = displayDates[index];
+              final isCurrentMonth = date.month == _selectedDate.month;
+              final isToday = date.year == DateTime.now().year &&
+                  date.month == DateTime.now().month &&
+                  date.day == DateTime.now().day;
+              final hasEvent = _hasEvent(date);
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedDate = date;
+                  });
+                },
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: isToday
+                      ? BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).primaryColor,
+                            width: 2,
+                          ),
+                        )
+                      : null,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        date.day.toString(),
+                        style: TextStyle(
+                          color:
+                              isCurrentMonth ? Colors.white : Colors.grey[600],
+                          fontWeight:
+                              isToday ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      if (hasEvent)
+                        Container(
+                          margin: const EdgeInsets.only(top: 2),
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildAddGroupWidget() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          // Open group creation dialog/page
+        },
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.person,
+                color: Theme.of(context).primaryColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Create Solo Schedule',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    'Create a schedule for yourself',
+                    style: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddSingleWidget() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          // Open group creation dialog/page
+        },
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.group_add,
+                color: Theme.of(context).primaryColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Create Group Schedule',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    'Create a schedule with a group',
+                    style: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddFriendWidget() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          // Open friend search dialog/page
+        },
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.person_add,
+                color: Theme.of(context).primaryColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Add Friends',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    'Expand your network',
+                    style: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvailableFriendsWidget() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Available Friends',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 48,
+            child: Stack(
+              children: List.generate(_availableFriends.length, (index) {
+                final friend = _availableFriends[index];
+                return Positioned(
+                  left: index * 40.0, // Adjust spacing here
+                  child: _buildAvailableFriendAvatar(friend),
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${_availableFriends.length} Online',
+            style: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: () {
+              setState(() {
+                _currentTabIndex = 1; // Switch to Groups tab
+              });
+            },
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 40),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              side: const BorderSide(color: Colors.white),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('View All Friends'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvailableFriendAvatar(Map<String, dynamic> friend) {
+    return Stack(
+      children: [
+        CircleAvatar(
+          radius: 18,
+          backgroundImage: NetworkImage(friend['avatar']),
+        ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: friend['status'] == 'Online'
+                  ? Colors.green
+                  : friend['status'] == 'Away'
+                      ? Colors.amber
+                      : Colors.grey,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUpcomingEventsWidget() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Upcoming Events',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          for (var event in _upcomingEvents) ...[
+            _buildEventCard(event),
+            if (event != _upcomingEvents.last) const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEventCard(Map<String, dynamic> event) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[700]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                event['isGroup'] ? event['groupName'] : 'Personal',
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+              Row(
+                children: [
+                  Icon(
+                    Icons.access_time,
+                    size: 12,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    event['time'],
+                    style: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            event['title'],
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                Icons.location_on,
+                size: 14,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(width: 4),
+              Text(
+                event['location'],
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          if (event['participants'] > 0) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    for (int i = 0; i < min(3, event['participants']); i++)
+                      Container(
+                        margin: const EdgeInsets.only(right: 4),
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[600],
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    if (event['participants'] > 3)
+                      Text(
+                        '+${event['participants'] - 3}',
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () {},
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    foregroundColor: Theme.of(context).primaryColor,
+                  ),
+                  child: const Text(
+                    'RSVP',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  int min(int a, int b) => a < b ? a : b;
+
+  // ---- GROUPS TAB ----
+  Widget _buildGroupsTabContent() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.0,
+        ),
+        itemCount: groups.length,
+        itemBuilder: (context, index) {
+          final group = groups[index];
+          return _buildGroupWidget(group);
+        },
+      ),
+    );
+  }
+
+  Widget _buildGroupWidget(Group group) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GroupsPage(),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1C1C1E), Color(0xFF2C2C2E)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Group Name and Count
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    group.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${group.members.length} members',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Member Avatars
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: group.members.take(9).map((member) {
+                return CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(member.avatarUrl),
+                  backgroundColor: Colors.grey[200],
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---- EXPLORE TAB ----
+  Widget _buildExploreTabContent() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: screenHeight * 0.25,
+            child: _buildGallery(),
+          ),
+          SizedBox(height: screenHeight * 0.02),
+          _buildHeading(
+            text: "Drink Specials",
+            onTap: () {
+              // Navigate to all drink specials
+            },
+          ),
+          SizedBox(height: screenHeight * 0.02),
+          _buildSpecialsList(drinkSpecials),
+          SizedBox(height: screenHeight * 0.02),
+          _buildHeading(
+            text: "Food Specials",
+            onTap: () {
+              // Navigate to all food specials
+            },
+          ),
+          SizedBox(height: screenHeight * 0.02),
+          _buildSpecialsList(foodSpecials),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGallery() {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        image: const DecorationImage(
+          image: NetworkImage('https://i.pravatar.cc/150?img=30'),
+          fit: BoxFit.cover,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeading({required String text, required VoidCallback onTap}) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          GestureDetector(
+            onTap: onTap,
+            child: Container(
+              padding: EdgeInsets.all(screenWidth * 0.02),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.grid_view,
+                color: Colors.white,
+                size: screenWidth * 0.045,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpecialsList(List<SpecialItem> items) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return SizedBox(
+      height: screenHeight * 0.2,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return _buildSpecialCard(item);
+        },
+      ),
+    );
+  }
+
+  Widget _buildSpecialCard(SpecialItem item) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Container(
+      width: screenWidth * 0.5,
+      margin: EdgeInsets.only(right: screenWidth * 0.03),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Stack(
+        children: [
+          // Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: Image.network(
+              item.imageUrl,
+              height: screenHeight * 0.2,
+              width: screenWidth * 0.5,
+              fit: BoxFit.cover,
+            ),
+          ),
+          // Overlay gradient
+          Container(
+            height: screenHeight * 0.2,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.7),
+                ],
+              ),
+            ),
+          ),
+          // Content overlay
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.all(screenWidth * 0.03),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.005),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item.location,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        item.price,
+                        style: const TextStyle(
+                          color: Color(0xFFFF4D6D),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: screenHeight * 0.005),
+                  Text(
+                    item.timeRange,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---- PROFILE TAB ----
+  Widget _buildProfileTabContent() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          buildProfileHeader(userData!),
+          const SizedBox(height: 20),
+          buildImpalerBar(),
+          const SizedBox(height: 20),
+          buildIdentityTags(userData!),
+          const SizedBox(height: 24),
+          buildRecentActivity(userData1),
+          buildLogoutButton(context),
+        ],
+      ),
+    );
+  }
+}
+
+// Model classes needed for the groups page
+class GroupMember {
+  final int id;
+  final String name;
+  final String avatarUrl;
+
+  GroupMember({
+    required this.id,
+    required this.name,
+    required this.avatarUrl,
+  });
+}
+
+class Group {
+  final int id;
+  String name;
+  List<GroupMember> members;
+
+  Group({
+    required this.id,
+    required this.name,
+    required this.members,
+  });
+}
+
+// Model class needed for the explore page
+class SpecialItem {
+  final String title;
+  final String location;
+  final String price;
+  final String imageUrl;
+  final String timeRange;
+
+  SpecialItem({
+    required this.title,
+    required this.location,
+    required this.price,
+    required this.imageUrl,
+    required this.timeRange,
+  });
+}
