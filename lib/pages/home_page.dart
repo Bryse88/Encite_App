@@ -1,6 +1,9 @@
 import 'dart:ui';
+import 'package:encite/components/Schedule/schedule_presentation_page.dart';
+import 'package:encite/models/schedule.dart';
 import 'package:encite/pages/friends/AddFriendScreen.dart';
 import 'package:encite/pages/solo_scheduler_form.dart';
+import 'package:encite/services/schedule_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -75,7 +78,7 @@ class _HomePageState extends State<HomePage>
     },
   ];
 
-  final List<Map<String, dynamic>> _upcomingEvents = [
+  List<Map<String, dynamic>> _upcomingEvents = [
     {
       'isGroup': true,
       'groupName': 'Study Group',
@@ -101,6 +104,10 @@ class _HomePageState extends State<HomePage>
     },
   ];
 
+  // Add schedule list to store fetched schedules
+  List<Schedule> _userSchedules = [];
+  bool _loadingSchedules = true;
+
   @override
   void initState() {
     super.initState();
@@ -120,6 +127,87 @@ class _HomePageState extends State<HomePage>
     });
 
     _fetchUserName();
+    _fetchUserSchedules();
+  }
+
+  Future<void> _fetchUserSchedules() async {
+    setState(() {
+      _loadingSchedules = true;
+    });
+
+    try {
+      // Fetch schedules using the service
+      final scheduleService = ScheduleService();
+      final schedules = await scheduleService.getUserSchedules();
+
+      if (mounted) {
+        setState(() {
+          _userSchedules = schedules;
+
+          // Add user schedules to the upcoming events list
+          _insertSchedulesToEvents(schedules);
+
+          _loadingSchedules = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching schedules: $e');
+      if (mounted) {
+        setState(() {
+          _loadingSchedules = false;
+        });
+      }
+    }
+  }
+
+  void _insertSchedulesToEvents(List<Schedule> schedules) {
+    // Sort schedules by start time (most recent first)
+    schedules.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+    // Add schedules to the beginning of _upcomingEvents
+    for (var schedule in schedules) {
+      if (schedule.activities.isNotEmpty) {
+        // Get the first activity as a preview
+        final firstActivity = schedule.activities.first;
+
+        // Format time range
+        final timeFormat = DateFormat('h:mm a');
+        final timeRange =
+            '${timeFormat.format(schedule.startTime)} - ${timeFormat.format(schedule.endTime)}';
+
+        // Get location from the first activity description (or a default)
+        String location = '';
+        try {
+          // Try to extract location from description
+          final descParts = firstActivity.description.split(' at ');
+          if (descParts.length > 1) {
+            location = descParts[1].split('.')[0];
+          } else {
+            location = 'Various Locations';
+          }
+        } catch (_) {
+          location = 'Various Locations';
+        }
+
+        // Add to upcoming events
+        _upcomingEvents.insert(0, {
+          'isGroup': false,
+          'isSchedule': true, // Mark as a schedule
+          'scheduleId': schedule.id,
+          'title':
+              '${firstActivity.title} & ${schedule.activities.length - 1} more',
+          'time': timeRange,
+          'location': location,
+          'participants': 0,
+          'schedule': schedule, // Include the full schedule for navigation
+        });
+      }
+    }
+
+    // Limit to 5 total events to avoid overwhelming the UI
+    if (_upcomingEvents.length > 5) {
+      _upcomingEvents = _upcomingEvents.sublist(0, 5);
+    }
   }
 
   Future<void> _fetchUserName() async {
@@ -989,20 +1077,71 @@ class _HomePageState extends State<HomePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Upcoming Events',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-              color: UberColors.textPrimary,
-              letterSpacing: -0.5,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Upcoming Events',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  color: UberColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              // Show a refresh button for schedules
+              if (_userSchedules.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    _fetchUserSchedules();
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: UberColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.refresh,
+                      size: 16,
+                      color: UberColors.primary,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
-          for (var event in _upcomingEvents) ...[
-            _buildEventCard(event),
-            if (event != _upcomingEvents.last) const SizedBox(height: 16),
-          ],
+
+          // Show loading indicator if schedules are loading
+          if (_loadingSchedules)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.0),
+                child: CircularProgressIndicator(
+                  color: UberColors.primary,
+                  strokeWidth: 3,
+                ),
+              ),
+            )
+          else if (_upcomingEvents.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.0),
+                child: Text(
+                  'No upcoming events',
+                  style: TextStyle(
+                    color: UberColors.textSecondary,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            )
+          else
+            for (var event in _upcomingEvents) ...[
+              _buildEventCard(event),
+              if (event != _upcomingEvents.last) const SizedBox(height: 16),
+            ],
         ],
       ),
     );
@@ -1016,146 +1155,190 @@ class _HomePageState extends State<HomePage>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: UberColors.divider, width: 1),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: event['isGroup']
-                      ? UberColors.primary.withOpacity(0.1)
-                      : UberColors.accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  event['isGroup'] ? event['groupName'] : 'Personal',
-                  style: TextStyle(
-                    color: event['isGroup']
-                        ? UberColors.primary
-                        : UberColors.accent,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12,
-                  ),
+      child: InkWell(
+        onTap: () {
+          // If this is a schedule, navigate to the schedule presentation page
+          if (event['isSchedule'] == true && event['schedule'] != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SchedulePresentationPage(
+                  schedule: event['schedule'],
                 ),
               ),
-              Row(
-                children: [
-                  Icon(
-                    Icons.access_time_rounded,
-                    size: 14,
-                    color: UberColors.textSecondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    event['time'],
-                    style: const TextStyle(
-                      color: UberColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            event['title'],
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: UberColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(
-                Icons.location_on_outlined,
-                size: 14,
-                color: UberColors.textSecondary,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                event['location'],
-                style: const TextStyle(
-                  color: UberColors.textSecondary,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          if (event['participants'] > 0) ...[
-            const SizedBox(height: 16),
+            );
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    for (int i = 0; i < min(3, event['participants']); i++)
-                      Container(
-                        margin: const EdgeInsets.only(right: 6),
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: UberColors.surface,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: UberColors.divider,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.person_outline,
-                            size: 14,
-                            color: UberColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    if (event['participants'] > 3)
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: UberColors.primary.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '+${event['participants'] - 3}',
-                            style: const TextStyle(
-                              color: UberColors.primary,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: UberColors.primary,
-                    borderRadius: BorderRadius.circular(8),
+                    color: event['isSchedule'] == true
+                        ? UberColors.accent.withOpacity(0.1)
+                        : event['isGroup']
+                            ? UberColors.primary.withOpacity(0.1)
+                            : UberColors.accent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    'RSVP',
+                  child: Text(
+                    event['isSchedule'] == true
+                        ? 'My Schedule'
+                        : event['isGroup']
+                            ? event['groupName']
+                            : 'Personal',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                      color: event['isSchedule'] == true
+                          ? UberColors.accent
+                          : event['isGroup']
+                              ? UberColors.primary
+                              : UberColors.accent,
+                      fontWeight: FontWeight.w500,
                       fontSize: 12,
                     ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 14,
+                      color: UberColors.textSecondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      event['time'],
+                      style: const TextStyle(
+                        color: UberColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              event['title'],
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: UberColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 14,
+                  color: UberColors.textSecondary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  event['location'],
+                  style: const TextStyle(
+                    color: UberColors.textSecondary,
+                    fontSize: 13,
                   ),
                 ),
               ],
             ),
+            if (event['participants'] > 0) ...[
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      for (int i = 0; i < min(3, event['participants']); i++)
+                        Container(
+                          margin: const EdgeInsets.only(right: 6),
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: UberColors.surface,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: UberColors.divider,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.person_outline,
+                              size: 14,
+                              color: UberColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      if (event['participants'] > 3)
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: UberColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '+${event['participants'] - 3}',
+                              style: const TextStyle(
+                                color: UberColors.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  // Only show RSVP button for non-schedule events
+                  if (event['isSchedule'] != true)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: UberColors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'RSVP',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  // For schedules, show "View" button
+                  if (event['isSchedule'] == true)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: UberColors.accent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'View',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
