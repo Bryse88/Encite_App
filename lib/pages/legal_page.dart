@@ -235,7 +235,7 @@ class _LegalPagesScreenState extends State<LegalPagesScreen>
             _buildLegalSection(
               title: "10. Contact Information",
               content:
-                  "If you have any questions about these Terms, please contact us at legal@encite.app.",
+                  "If you have any questions about these Terms, please contact us at bryson@encite.net.",
             ),
           ],
         ),
@@ -300,7 +300,7 @@ class _LegalPagesScreenState extends State<LegalPagesScreen>
             _buildLegalSection(
               title: "10. Contact Us",
               content:
-                  "If you have any questions about this Privacy Policy, please contact us at privacy@encite.app.",
+                  "If you have any questions about this Privacy Policy, please contact us at bryson@encite.net.",
             ),
           ],
         ),

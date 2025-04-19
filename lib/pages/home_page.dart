@@ -1,7 +1,8 @@
 import 'dart:ui';
 import 'package:encite/components/Schedule/schedule_presentation_page.dart';
 import 'package:encite/models/schedule.dart';
-import 'package:encite/pages/friends/AddFriendScreen.dart';
+import 'package:encite/pages/events_page.dart';
+import 'package:encite/components/ProfileComponents/ExtraPages/AddFriendScreen.dart';
 import 'package:encite/pages/solo_scheduler_form.dart';
 import 'package:encite/services/schedule_service.dart';
 import 'package:flutter/material.dart';
@@ -674,6 +675,12 @@ class _HomePageState extends State<HomePage>
                   setState(() {
                     _selectedDate = date;
                   });
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EventsPage(selectedDate: date),
+                    ),
+                  );
                 },
                 child: Container(
                   width: 32,
@@ -1157,7 +1164,6 @@ class _HomePageState extends State<HomePage>
       ),
       child: InkWell(
         onTap: () {
-          // If this is a schedule, navigate to the schedule presentation page
           if (event['isSchedule'] == true && event['schedule'] != null) {
             Navigator.push(
               context,
@@ -1205,7 +1211,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.access_time_rounded,
                       size: 14,
                       color: UberColors.textSecondary,
@@ -1223,13 +1229,22 @@ class _HomePageState extends State<HomePage>
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              event['title'],
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: UberColors.textPrimary,
-              ),
+            // Title (wrapped in Flexible to avoid overflow)
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    event['title'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: UberColors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Row(
@@ -1240,11 +1255,15 @@ class _HomePageState extends State<HomePage>
                   color: UberColors.textSecondary,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  event['location'],
-                  style: const TextStyle(
-                    color: UberColors.textSecondary,
-                    fontSize: 13,
+                Flexible(
+                  child: Text(
+                    event['location'],
+                    style: const TextStyle(
+                      color: UberColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
               ],
@@ -1298,25 +1317,6 @@ class _HomePageState extends State<HomePage>
                         ),
                     ],
                   ),
-                  // Only show RSVP button for non-schedule events
-                  if (event['isSchedule'] != true)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: UberColors.primary,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'RSVP',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  // For schedules, show "View" button
                   if (event['isSchedule'] == true)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -1327,6 +1327,23 @@ class _HomePageState extends State<HomePage>
                       ),
                       child: const Text(
                         'View',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: UberColors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'RSVP',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,

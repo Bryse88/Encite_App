@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:encite/services/schedule_service.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/services.dart';
 
 class SoloSchedulerForm extends StatefulWidget {
   const SoloSchedulerForm({Key? key}) : super(key: key);

@@ -1,9 +1,7 @@
 import 'package:encite/components/LoginComponents/SocialAuthButtons.dart';
 import 'package:encite/components/LoginComponents/gradient_background.dart';
 import 'package:encite/components/LoginComponents/impaler_bar.dart';
-import 'package:encite/components/LoginComponents/logo_with_name.dart';
 import 'package:encite/components/LoginComponents/social_login_options.dart';
-import 'package:encite/components/MainComponents/background_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // ← required!
 

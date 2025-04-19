@@ -1,6 +1,9 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encite/components/LoginComponents/AuthenticationServices/auth_wrapper.dart';
+import 'package:encite/components/ProfileComponents/ExtraPages/EditProfilePage.dart';
+import 'package:encite/pages/friends/friend_request.dart';
+import 'package:encite/pages/group_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:encite/components/Colors/uber_colors.dart';
@@ -94,6 +97,43 @@ class _ProfilePageState extends State<ProfilePage>
     } catch (e) {
       print('Error fetching user data: $e');
     }
+  }
+
+  void navigateToEditProfile() {
+    // Add navigation to edit profile page
+    print('Navigate to edit profile');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditProfilePage()),
+    );
+  }
+
+  void navigateToSettings() {
+    Navigator.pushNamed(context, '/settings');
+  }
+
+  void navigateToFriendsPage() {
+    print('Navigate to friends page');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const FriendsPage()),
+    );
+  }
+
+  void navigateToGroupsPage() {
+    print('Navigate to groups page');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => GroupsPage()),
+    );
+  }
+
+  void navigateToSchedulesPage() {
+    print('Navigate to schedules page');
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => const SchedulesPage()),
+    // );
   }
 
   @override
@@ -293,24 +333,27 @@ class _ProfilePageState extends State<ProfilePage>
                     ),
                     const SizedBox(height: 8),
                     // Uber-inspired profile button
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: UberColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Edit Profile',
-                        style: TextStyle(
-                          color: UberColors.primary,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
+                    GestureDetector(
+                      onTap: navigateToEditProfile,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: UberColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Edit Profile',
+                          style: TextStyle(
+                            color: UberColors.primary,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
-                    ),
+                    )
                   ],
                 ),
               ),
@@ -342,11 +385,20 @@ class _ProfilePageState extends State<ProfilePage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStat(groupNumber, 'Groups'),
+          GestureDetector(
+            onTap: navigateToGroupsPage,
+            child: _buildStat(groupNumber, 'Groups'),
+          ),
           _buildVerticalDivider(),
-          _buildStat(friendsNumber, 'Friends'),
+          GestureDetector(
+            onTap: navigateToFriendsPage,
+            child: _buildStat(friendsNumber, 'Friends'),
+          ),
           _buildVerticalDivider(),
-          _buildStat(schedulesCreated, 'Schedules'),
+          GestureDetector(
+            onTap: navigateToSchedulesPage,
+            child: _buildStat(schedulesCreated, 'Schedules'),
+          ),
         ],
       ),
     );
