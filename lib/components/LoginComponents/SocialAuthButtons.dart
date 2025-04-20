@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import
+import 'package:encite/components/LoginComponents/AuthenticationServices/Username.dart';
 
 class SocialAuthButtons extends StatefulWidget {
   const SocialAuthButtons({Key? key}) : super(key: key);
@@ -28,12 +29,17 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
       // Use provided name if user name is null or empty
       final name =
           user.displayName?.isNotEmpty == true ? user.displayName : displayName;
+      final userName = await generateAndSaveUsername(
+        fullName: name ?? '',
+        uid: user.uid,
+      );
 
       await _firestore.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'email': user.email,
         'name': name,
         'photoURL': user.photoURL,
+        'userName': userName,
         'phoneNumber': user.phoneNumber,
         'createdAt': FieldValue.serverTimestamp(),
         'lastLogin': FieldValue.serverTimestamp(),

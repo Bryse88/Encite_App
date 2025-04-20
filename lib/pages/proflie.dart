@@ -276,7 +276,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   Widget buildProfileHeader(Map<String, dynamic> userData) {
     final name = userData['name'] ?? 'User';
-    final username = userData['uid'] ?? '@username';
+    final username = userData['userName'] ?? '@username';
     final profileImage = userData['photoURL'] ?? 'https://i.pravatar.cc/300';
 
     return Padding(

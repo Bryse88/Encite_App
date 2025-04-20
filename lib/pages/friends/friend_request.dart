@@ -264,11 +264,27 @@ class _FriendsPageState extends State<FriendsPage>
 
   @override
   Widget build(BuildContext context) {
-    // Call super.build to satisfy AutomaticKeepAliveClientMixin
     super.build(context);
 
     return Scaffold(
       backgroundColor: UberColors.background,
+      appBar: AppBar(
+        backgroundColor: UberColors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          color: UberColors.textPrimary,
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Friends',
+          style: TextStyle(
+            color: UberColors.textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       body: userData == null
           ? const Center(
               child: CircularProgressIndicator(
@@ -278,7 +294,6 @@ class _FriendsPageState extends State<FriendsPage>
             )
           : Stack(
               children: [
-                // Background with subtle gradient
                 Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
@@ -288,8 +303,8 @@ class _FriendsPageState extends State<FriendsPage>
                     ),
                   ),
                 ),
-                // Content
                 SafeArea(
+                    // Content
                     child: SingleChildScrollView(
                   // Wrap the entire content here
                   physics: const BouncingScrollPhysics(),
@@ -299,42 +314,6 @@ class _FriendsPageState extends State<FriendsPage>
                     child: Column(
                       children: [
                         // Header with title and back button
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                            vertical: 16.0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Friends',
-                                style: TextStyle(
-                                  color: UberColors.textPrimary,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: UberColors.cardBg,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.arrow_back_ios_rounded,
-                                    color: UberColors.textPrimary,
-                                    size: 20,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
 
                         // Toggle buttons
                         Padding(

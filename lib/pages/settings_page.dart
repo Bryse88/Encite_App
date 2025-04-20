@@ -133,12 +133,8 @@ class _SettingsPageState extends State<SettingsPage>
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                           child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
                             child: IconButton(
-                              icon: const Icon(Icons.arrow_back,
+                              icon: const Icon(Icons.arrow_back_ios_new_rounded,
                                   color: Colors.white),
                               onPressed: () => Navigator.of(context).pop(),
                             ),
@@ -157,96 +153,6 @@ class _SettingsPageState extends State<SettingsPage>
                     ],
                   ),
                 ),
-
-                // Profile card
-                // if (!_isLoading) ...[
-                //   Padding(
-                //     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                //     child: ClipRRect(
-                //       borderRadius: BorderRadius.circular(24),
-                //       child: BackdropFilter(
-                //         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                //         child: Container(
-                //           padding: const EdgeInsets.all(20),
-                //           decoration: BoxDecoration(
-                //             gradient: LinearGradient(
-                //               begin: Alignment.topLeft,
-                //               end: Alignment.bottomRight,
-                //               colors: [
-                //                 Colors.blue.withOpacity(0.3),
-                //                 Colors.purple.withOpacity(0.1),
-                //               ],
-                //             ),
-                //             borderRadius: BorderRadius.circular(24),
-                //             border: Border.all(
-                //               color: Colors.white.withOpacity(0.2),
-                //               width: 1.5,
-                //             ),
-                //           ),
-                //           child: Row(
-                //             children: [
-                //               CircleAvatar(
-                //                 radius: 30,
-                //                 backgroundColor: Colors.white.withOpacity(0.2),
-                //                 child: Text(
-                //                   _userName.isNotEmpty
-                //                       ? _userName[0].toUpperCase()
-                //                       : '?',
-                //                   style: const TextStyle(
-                //                     fontSize: 24,
-                //                     fontWeight: FontWeight.bold,
-                //                     color: Colors.white,
-                //                   ),
-                //                 ),
-                //               ),
-                //               const SizedBox(width: 16),
-                //               Expanded(
-                //                 child: Column(
-                //                   crossAxisAlignment: CrossAxisAlignment.start,
-                //                   children: [
-                //                     Text(
-                //                       _userName,
-                //                       style: const TextStyle(
-                //                         fontSize: 18,
-                //                         fontWeight: FontWeight.bold,
-                //                         color: Colors.white,
-                //                       ),
-                //                     ),
-                //                     const SizedBox(height: 4),
-                //                     Text(
-                //                       _userEmail,
-                //                       style: TextStyle(
-                //                         fontSize: 14,
-                //                         color: Colors.white.withOpacity(0.7),
-                //                       ),
-                //                     ),
-                //                   ],
-                //                 ),
-                //               ),
-                //               IconButton(
-                //                 icon: const Icon(
-                //                   Icons.edit_outlined,
-                //                   color: Colors.white,
-                //                 ),
-                //                 onPressed: () {
-                //                   // Navigate to profile edit page
-                //                   Navigator.of(context).pushNamed('/profile');
-                //                 },
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //       ),
-                //     ),
-                //   ),
-                // ] else ...[
-                //   const Padding(
-                //     padding: EdgeInsets.all(16.0),
-                //     child: Center(
-                //       child: CircularProgressIndicator(),
-                //     ),
-                //   ),
-                // ],
 
                 // Settings list
                 Expanded(

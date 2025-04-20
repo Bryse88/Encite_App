@@ -97,16 +97,6 @@ class _ChatsPageState extends State<ChatsPage> {
         // backgroundColor: Colors.transparent,
         body: Stack(
       children: [
-        // Background gradient
-        // Container(
-        //   decoration: const BoxDecoration(
-        //     gradient: LinearGradient(
-        //       colors: [Color(0xFF1C1C1E), Colors.black],
-        //       begin: Alignment.topCenter,
-        //       end: Alignment.bottomCenter,
-        //     ),
-        //   ),
-        // ),
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -119,7 +109,6 @@ class _ChatsPageState extends State<ChatsPage> {
         SafeArea(
           child: Column(
             children: [
-              // Header with search functionality
               // Header with search functionality
               Padding(
                 padding: const EdgeInsets.all(20.0),
@@ -159,12 +148,9 @@ class _ChatsPageState extends State<ChatsPage> {
                                   filter:
                                       ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                                   child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
                                     child: IconButton(
-                                      icon: const Icon(Icons.arrow_back,
+                                      icon: const Icon(
+                                          Icons.arrow_back_ios_new_rounded,
                                           color: Colors.white),
                                       onPressed: () =>
                                           Navigator.of(context).pop(),

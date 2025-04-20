@@ -1,3 +1,4 @@
+import 'package:encite/components/Colors/uber_colors.dart';
 import 'package:encite/components/group_components/schedule_input.dart';
 import 'package:flutter/material.dart';
 
@@ -118,7 +119,16 @@ class _GroupsPageState extends State<GroupsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Groups'),
+        title: const Text(
+          'Groups',
+          style: TextStyle(
+            color: UberColors.textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 24,
+            letterSpacing: -0.5,
+          ),
+        ),
+        centerTitle: false,
         elevation: 0,
       ),
       body:
