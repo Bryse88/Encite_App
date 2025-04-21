@@ -13,7 +13,6 @@ class ScheduleService {
   // Generate a new schedule using the backend API
   Future<Schedule?> generateSchedule(Map<String, dynamic> userData) async {
     try {
-      // Print data for debugging
       print('Generating schedule with data: ${jsonEncode(userData)}');
 
       final response = await http.post(
@@ -23,23 +22,23 @@ class ScheduleService {
       );
 
       if (response.statusCode == 200) {
-        // Decode the response body
         final decoded = jsonDecode(response.body);
         print('Received schedule response: ${response.body}');
 
-        // Check if we have activities
         if (decoded['activities'] == null ||
             (decoded['activities'] as List).isEmpty) {
           print('Response contained no activities');
           return null;
         }
 
-        // Build the Schedule object - using existing model structure
+        // Extract original user-selected times from the input
+        final userStartTime = DateTime.parse(userData['startTime']).toLocal();
+        final userEndTime = DateTime.parse(userData['endTime']).toLocal();
+
         return Schedule(
           id: decoded['id'] ?? 'schedule_${const Uuid().v4().substring(0, 8)}',
           createdAt: DateTime.parse(decoded['createdAt']),
           activities: (decoded['activities'] as List).map((activityJson) {
-            // Save explanation in a separate Firebase document if needed
             String? explanation = activityJson['explanation'];
             if (explanation != null && explanation.isNotEmpty) {
               _saveActivityExplanation(activityJson['id'], explanation);
@@ -55,6 +54,8 @@ class ScheduleService {
               imageUrl: activityJson['imageUrl'],
             );
           }).toList(),
+          userStartTime: userStartTime,
+          userEndTime: userEndTime,
         );
       } else {
         print('Server error: ${response.statusCode}');
@@ -67,7 +68,6 @@ class ScheduleService {
     }
   }
 
-  // Temporarily store explanations in a separate collection
   Future<void> _saveActivityExplanation(
       String activityId, String explanation) async {
     try {
@@ -88,7 +88,6 @@ class ScheduleService {
     }
   }
 
-  // Get explanation for an activity
   Future<String?> getActivityExplanation(String activityId) async {
     try {
       final doc = await FirebaseFirestore.instance
@@ -106,11 +105,9 @@ class ScheduleService {
     }
   }
 
-  // Request a substitute activity for a specific activity in the schedule
   Future<Activity?> requestSubstituteActivity(
       String activityId, Schedule schedule) async {
     try {
-      // Create payload for substitute request
       final activityToReplace = schedule.activities.firstWhere(
         (a) => a.id == activityId,
         orElse: () => schedule.activities.first,
@@ -133,7 +130,6 @@ class ScheduleService {
             .toList(),
       };
 
-      // Send request to substitution endpoint
       final response = await http.post(
         Uri.parse('$apiUrl/substitute'),
         headers: {'Content-Type': 'application/json'},
@@ -145,7 +141,6 @@ class ScheduleService {
         final activityJson = decoded['activity'];
 
         if (activityJson != null) {
-          // Save explanation separately if it exists
           String? explanation = activityJson['explanation'];
           if (explanation != null && explanation.isNotEmpty) {
             _saveActivityExplanation(activityJson['id'], explanation);
@@ -164,24 +159,19 @@ class ScheduleService {
         }
       }
 
-      // If the API isn't available yet or returns an error, fallback to a mock
       return _generateMockSubstitute(activityId, schedule);
     } catch (e) {
       print('Error requesting substitute: $e');
-      // Fallback to a mock implementation
       return _generateMockSubstitute(activityId, schedule);
     }
   }
 
-  // Generate a mock substitute activity (temporary until API endpoint is ready)
   Activity _generateMockSubstitute(String activityId, Schedule schedule) {
-    // Find the activity to replace
     final originalActivity = schedule.activities.firstWhere(
       (a) => a.id == activityId,
       orElse: () => schedule.activities.first,
     );
 
-    // List of alternative titles
     final alternativeTitles = [
       'Alternative ${originalActivity.title.split(' ').last}',
       'Different ${originalActivity.title.split(' ').last}',
@@ -189,16 +179,13 @@ class ScheduleService {
       'Exciting ${originalActivity.title.split(' ').last}',
     ];
 
-    // Random select a title
     final title = alternativeTitles[
         DateTime.now().millisecond % alternativeTitles.length];
     final newId = 'substitute_${const Uuid().v4().substring(0, 8)}';
 
-    // Save a mock explanation
     _saveActivityExplanation(newId,
         'AI-suggested alternative that fits within your schedule timeframe.');
 
-    // Create a substitute with same time slot but different details
     return Activity(
       id: newId,
       title: title,
@@ -206,33 +193,32 @@ class ScheduleService {
           'This is an alternative activity suggested by our AI based on your preferences.',
       startTime: originalActivity.startTime,
       endTime: originalActivity.endTime,
-      price: originalActivity.price * 0.9, // Slightly cheaper alternative
+      price: originalActivity.price * 0.9,
       imageUrl:
           'https://picsum.photos/200?random=${DateTime.now().millisecondsSinceEpoch}',
     );
   }
 
-  // Save schedule to Firestore
   Future<void> saveSchedule(Schedule schedule) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       throw Exception('User not authenticated');
     }
 
-    // Reference to the user's schedules collection
     final schedulesRef = FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('schedules')
         .doc(schedule.id);
 
-    // Save the schedule
     await schedulesRef.set({
       'id': schedule.id,
       'createdAt': schedule.createdAt.toIso8601String(),
       'totalCost': schedule.totalCost,
       'startTime': schedule.startTime.toIso8601String(),
       'endTime': schedule.endTime.toIso8601String(),
+      'userStartTime': schedule.userStartTime?.toIso8601String(),
+      'userEndTime': schedule.userEndTime?.toIso8601String(),
       'activities': schedule.activities
           .map((a) => {
                 'id': a.id,
@@ -249,7 +235,6 @@ class ScheduleService {
     print('Schedule saved to Firestore: ${schedule.id}');
   }
 
-  // Get all user schedules from Firestore
   Future<List<Schedule>> getUserSchedules() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -280,6 +265,12 @@ class ScheduleService {
               imageUrl: activityData['imageUrl'],
             );
           }).toList(),
+          userStartTime: data['userStartTime'] != null
+              ? DateTime.parse(data['userStartTime']).toLocal()
+              : null,
+          userEndTime: data['userEndTime'] != null
+              ? DateTime.parse(data['userEndTime']).toLocal()
+              : null,
         );
       }).toList();
     } catch (e) {

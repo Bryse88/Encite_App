@@ -92,8 +92,22 @@ class _ActivityCardState extends State<ActivityCard> {
                       height: 150,
                       width: double.infinity,
                       color: Colors.grey[300],
-                      child: const Icon(Icons.error),
+                      child: Center(
+                        child: Image.network(
+                          // Generate a consistent fallback image based on the activity title
+                          'https://firebasestorage.googleapis.com/v0/b/project888-29925.firebasestorage.app/o/ChatGPT%20Image%20Apr%2017%2C%202025%2C%2007_27_13%20AM.png?alt=media&token=7ec0218c-d97c-468b-a141-07d403bc5ee4',
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.image_not_supported, size: 48),
+                        ),
+                      ),
                     ),
+                    cacheKey: widget.activity.id +
+                        '_image', // Use activity ID for cache key
+                    maxHeightDiskCache: 300, // Limit cache size
+                    memCacheHeight: 600, // For high-res displays
                   ),
                 ),
                 // Price badge

@@ -551,9 +551,25 @@ class ChatService {
 
   // Search for users to start a conversation with
   // Search for users to start a conversation with
+  // Modified searchUsers method for ChatService class
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+    // When query is empty, fetch recent users instead of returning empty list
     if (query.trim().isEmpty) {
-      return [];
+      // Fetch all users, or limit to a reasonable number (e.g., 20)
+      final usersQuery = await _firestore.collection('users').limit(20).get();
+
+      return usersQuery.docs
+          .where((doc) => doc.id != currentUserId) // Exclude current user
+          .map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'displayName':
+              data['name'] ?? '', // This maps 'name' to 'displayName'
+          'photoURL': data['photoURL'] ?? '',
+          'userName': data['userName'] ?? '',
+        };
+      }).toList();
     }
 
     final queryLower = query.toLowerCase();

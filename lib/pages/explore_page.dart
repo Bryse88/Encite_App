@@ -36,61 +36,60 @@ class SpecialItem {
 
 // Sample data with properly formatted URLs
 List<String> galleryImages = [
-  'https://fastly.picsum.photos/id/39/3456/2304.jpg?hmac=cc_VPxzydwTUbGEtpsDeo2NxCkeYQrhTLqw4TFo-dIg',
-  'https://fastly.picsum.photos/id/42/3456/2304.jpg?hmac=ff8K4PVQlzTLzQQV8jjJbFUV9Axx11KH9k_a9O77DOg'
+  'https://images.squarespace-cdn.com/content/v1/5603605fe4b0ad0093a34191/92c30ad6-6b23-4032-b77b-8fa6a47aa590/ACP_2025+Logo_Photo-02.png?format=2500w',
 ];
 
 List<SpecialItem> drinkSpecials = [
   SpecialItem(
-    title: 'Mega Memosas',
-    location: 'SconnieBar',
+    title: 'Montucky Cold Snacks',
+    location: 'Steenbock\'s on Orchard',
     price: '\$5',
     imageUrl:
-        'https://fastly.picsum.photos/id/113/4168/2464.jpg?hmac=p1FqJDS9KHL70UWqUjlYPhJKBdiNOI_CIH0Qo-74_fU',
-    timeRange: '11:00 am - 12:00 am',
+        'https://firebasestorage.googleapis.com/v0/b/project-888-33c84.appspot.com/o/Specialty%20Drinks%2FSteenbock\'s%20on%20Orchard%2Fmontuck_single.jpg?alt=media&token=8499c8ff-7c95-4b62-9686-cbbac5459e5d',
+    timeRange: '11:00 am - 7:00 pm',
   ),
   SpecialItem(
-    title: 'Baca Balls',
-    location: 'SconniePub',
-    price: '\$7',
+    title: 'White Chocolate Mocha',
+    location: 'Faire Trade Coffee House',
+    price: '\$5',
     imageUrl:
-        'https://fastly.picsum.photos/id/292/3852/2556.jpg?hmac=cPYEh0I48Xpek2DPFLxTBhlZnKVhQCJsbprR-Awl9lo',
-    timeRange: '11:00 am - 10:00 pm',
+        'https://firebasestorage.googleapis.com/v0/b/project888-29925.firebasestorage.app/o/ToastedWhiteChocolateMochaHot-Process6.jpg?alt=media&token=d3a0707c-04c2-4b86-bc6b-c458baa3fe3f',
+    timeRange: '7:30 am - 6:00 pm',
   ),
   SpecialItem(
-    title: 'Happy Hour',
+    title: 'Turkish Latte',
     location: 'Downtown Bar',
     price: '\$4',
     imageUrl:
-        'https://fastly.picsum.photos/id/1060/5000/3333.jpg?hmac=2_ONozn0PNqPP1yaiBg8fb7h8CBW0cLIjH29-BHEcOU',
-    timeRange: '4:00 pm - 7:00 pm',
+        'https://firebasestorage.googleapis.com/v0/b/project888-29925.firebasestorage.app/o/tukish%20mocha.jpg?alt=media&token=5e993a88-bf32-4977-b026-c3f04330b8a5',
+    timeRange: '7:30 am - 6:00 pm',
   ),
 ];
 
 List<SpecialItem> foodSpecials = [
   SpecialItem(
     title: 'Burger Monday',
-    location: 'Grill House',
+    location: 'Sconnie Bar',
     price: '\$8',
     imageUrl:
-        'https://fastly.picsum.photos/id/431/5000/3334.jpg?hmac=T2rL_gBDyJYpcr1Xm8Kv7L6bhwvmZS8nKT5w3ok58kA',
-    timeRange: '11:00 am - 10:00 pm',
+        'https://firebasestorage.googleapis.com/v0/b/project-888-33c84.appspot.com/o/Specialty%20Food%2FSconnieBar%2FBurger.png?alt=media&token=3543c79a-8e12-4fb1-a17f-27814cf7c98e',
+    timeRange: '11:00 am - 1:00 am',
   ),
   SpecialItem(
     title: 'Taco Tuesday',
-    location: 'Mexican Corner',
+    location: 'Wandos',
     price: '\$2',
     imageUrl:
-        'https://fastly.picsum.photos/id/1059/5000/3337.jpg?hmac=Uj7yS7_CegQBLoCCuuaEg989HQU0RjuBLEjFtFvKXVE',
+        'https://firebasestorage.googleapis.com/v0/b/project-888-33c84.appspot.com/o/Specialty%20Food%2FWandos%2FTacos.png?alt=media&token=6d2d53c2-f32a-47b9-b293-467938608f23',
     timeRange: '5:00 pm - 10:00 pm',
   ),
   SpecialItem(
-    title: 'Pizza Deal',
-    location: 'Italian Place',
-    price: '\$10',
+    title: 'House Frites',
+    location: 'Steenbock\'s on Orchard',
+    price: '\$5',
     imageUrl:
-        'https://fastly.picsum.photos/id/835/5000/3333.jpg?hmac=uT8669j2o1azdh0D3_aLr1k0HE8qILr4WRNEtZYgZLc',
-    timeRange: '12:00 pm - 9:00 pm',
+        'https://firebasestorage.googleapis.com/v0/b/project-888-33c84.appspot.com/o/Specialty%20Food%2FSteenbock\'s%20on%20Orchard%2FFrites.jpg?alt=media&token=d5b2628b-1380-44be-85de-adab42e44db4',
+    timeRange: '11:00 am - 7:00 pm',
   ),
 ];
 
@@ -164,7 +163,7 @@ class _ExplorePageState extends State<ExplorePage>
                   physics: const BouncingScrollPhysics(),
                   slivers: [
                     // App bar
-                    SliverAppBar(
+                    const SliverAppBar(
                       backgroundColor: Colors.transparent,
                       expandedHeight: 60,
                       floating: true,
@@ -172,7 +171,7 @@ class _ExplorePageState extends State<ExplorePage>
                       title: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Explore',
                             style: TextStyle(
                               color: UberColors.textPrimary,
@@ -181,22 +180,22 @@ class _ExplorePageState extends State<ExplorePage>
                               letterSpacing: -0.5,
                             ),
                           ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: UberColors.cardBg,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.search_rounded,
-                                color: UberColors.textPrimary,
-                                size: 22,
-                              ),
-                              onPressed: () {
-                                // Search functionality
-                              },
-                            ),
-                          ),
+                          // Container(
+                          //   decoration: BoxDecoration(
+                          //     color: UberColors.cardBg,
+                          //     borderRadius: BorderRadius.circular(12),
+                          //   ),
+                          //   child: IconButton(
+                          //     icon: const Icon(
+                          //       Icons.search_rounded,
+                          //       color: UberColors.textPrimary,
+                          //       size: 22,
+                          //     ),
+                          //     onPressed: () {
+                          //       // Search functionality
+                          //     },
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
@@ -332,8 +331,14 @@ class Gallery extends StatelessWidget {
           // Featured image
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              galleryImages[0],
+            // child: Image.network(
+            //   galleryImages[0],
+            //   width: double.infinity,
+            //   height: double.infinity,
+            //   fit: BoxFit.cover,
+            // ),
+            child: Image.asset(
+              'lib/img/WASB_WEEK.png',
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
@@ -386,7 +391,7 @@ class Gallery extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'Campus Week Specials',
+                    'WASB All Campus Party Week',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -395,16 +400,16 @@ class Gallery extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.calendar_today_outlined,
                         color: Colors.white70,
                         size: 14,
                       ),
-                      const SizedBox(width: 6),
-                      const Text(
-                        'Apr 16 - Apr 22',
+                      SizedBox(width: 6),
+                      Text(
+                        'Apr 21 - Apr 25',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 14,

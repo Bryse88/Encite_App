@@ -148,6 +148,10 @@ class _SchedulerFormState extends State<SoloSchedulerForm>
       },
       "schedule_density": prefs['schedule_density'] ?? 4
     };
+    print('Local start: $start');
+    print('Local end: $end');
+    print('UTC start: ${start.toUtc()}');
+    print('UTC end: ${end.toUtc()}');
 
     // Send to backend API
     final schedule = await ScheduleService().generateSchedule(schedulePayload);

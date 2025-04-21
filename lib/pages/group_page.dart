@@ -1,31 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:encite/components/ChatComponents/chat_service.dart';
+import 'package:encite/components/GroupComponents/createGroupPage.dart';
+import 'package:encite/components/GroupComponents/groupService.dart';
+import 'package:encite/pages/chat_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:encite/components/Colors/uber_colors.dart';
 import 'package:encite/components/group_components/schedule_input.dart';
-import 'package:flutter/material.dart';
-
-// Model classes
-class GroupMember {
-  final int id;
-  final String name;
-  final String avatarUrl;
-
-  GroupMember({
-    required this.id,
-    required this.name,
-    required this.avatarUrl,
-  });
-}
-
-class Group {
-  final int id;
-  String name;
-  List<GroupMember> members;
-
-  Group({
-    required this.id,
-    required this.name,
-    required this.members,
-  });
-}
+import 'package:encite/components/ChatComponents/chat_models.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
 class GroupsPage extends StatefulWidget {
   @override
@@ -33,87 +16,56 @@ class GroupsPage extends StatefulWidget {
 }
 
 class _GroupsPageState extends State<GroupsPage> {
-  // Mock data for groups
-  List<Group> groups = [
-    Group(
-      id: 1,
-      name: 'Brunch Club',
-      members: [
-        GroupMember(
-            id: 1,
-            name: 'Alex Johnson',
-            avatarUrl: 'https://i.pravatar.cc/150?img=1'),
-        GroupMember(
-            id: 2,
-            name: 'Sarah Williams',
-            avatarUrl: 'https://i.pravatar.cc/150?img=2'),
-        GroupMember(
-            id: 3,
-            name: 'Miguel Rodriguez',
-            avatarUrl: 'https://i.pravatar.cc/150?img=3'),
-        GroupMember(
-            id: 4,
-            name: 'Priya Patel',
-            avatarUrl: 'https://i.pravatar.cc/150?img=4'),
-        GroupMember(
-            id: 5,
-            name: 'David Chen',
-            avatarUrl: 'https://i.pravatar.cc/150?img=5'),
-      ],
-    ),
-    Group(
-      id: 2,
-      name: 'Hometown Friends',
-      members: [
-        GroupMember(
-            id: 1,
-            name: 'Alex Johnson',
-            avatarUrl: 'https://i.pravatar.cc/150?img=1'),
-        GroupMember(
-            id: 6,
-            name: 'Emma Wilson',
-            avatarUrl: 'https://i.pravatar.cc/150?img=6'),
-        GroupMember(
-            id: 7,
-            name: 'James Taylor',
-            avatarUrl: 'https://i.pravatar.cc/150?img=7'),
-      ],
-    ),
-    Group(
-      id: 3,
-      name: 'Work Friends',
-      members: [
-        GroupMember(
-            id: 8,
-            name: 'Lisa Brown',
-            avatarUrl: 'https://i.pravatar.cc/150?img=8'),
-        GroupMember(
-            id: 9,
-            name: 'Tom Garcia',
-            avatarUrl: 'https://i.pravatar.cc/150?img=9'),
-        GroupMember(
-            id: 10,
-            name: 'Nina Patel',
-            avatarUrl: 'https://i.pravatar.cc/150?img=10'),
-        GroupMember(
-            id: 11,
-            name: 'Omar Hassan',
-            avatarUrl: 'https://i.pravatar.cc/150?img=11'),
-      ],
-    ),
-    Group(
-      id: 4,
-      name: 'Date Night',
-      members: [
-        GroupMember(
-            id: 12,
-            name: 'Mei Lin',
-            avatarUrl: 'https://i.pravatar.cc/150?img=12'),
-      ],
-    ),
-  ];
+  // Initialize services
+  final GroupService _groupService = GroupService();
+  final ChatService _chatService = ChatService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance; // Add this line
 
-  Group? selectedGroup;
+  // State variables
+  List<Map<String, dynamic>> groups = [];
+  Map<String, dynamic>? selectedGroup;
+  bool isLoading = true;
+  StreamSubscription? _groupsSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGroups();
+  }
+
+  @override
+  void dispose() {
+    _groupsSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _loadGroups() {
+    setState(() {
+      isLoading = true;
+    });
+
+    _groupsSubscription = _groupService.getGroups().listen((fetchedGroups) {
+      setState(() {
+        groups = fetchedGroups;
+        isLoading = false;
+      });
+    }, onError: (error, stackTrace) {
+      print('🔥 Firestore Error: $error');
+      print('📍 StackTrace: $stackTrace');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading groups. See console log.')),
+      );
+
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading groups: $error')),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,13 +82,42 @@ class _GroupsPageState extends State<GroupsPage> {
         ),
         centerTitle: false,
         elevation: 0,
+        actions: [
+          if (selectedGroup == null)
+            IconButton(
+              icon: Icon(Icons.add_circle_outline),
+              onPressed: _showCreateGroupDialog,
+            ),
+        ],
       ),
-      body:
-          selectedGroup == null ? _buildGroupsGrid() : _buildGroupDetailPage(),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : selectedGroup == null
+              ? _buildGroupsGrid()
+              : _buildGroupDetailPage(),
     );
   }
 
   Widget _buildGroupsGrid() {
+    if (groups.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'No groups yet',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _showCreateGroupDialog,
+              child: Text('Create a Group'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: GridView.builder(
@@ -155,7 +136,9 @@ class _GroupsPageState extends State<GroupsPage> {
     );
   }
 
-  Widget _buildGroupWidget(Group group) {
+  Widget _buildGroupWidget(Map<String, dynamic> group) {
+    final participants = group['participants'] as Map<String, dynamic>;
+
     return InkWell(
       onTap: () {
         setState(() {
@@ -188,7 +171,7 @@ class _GroupsPageState extends State<GroupsPage> {
               children: [
                 Expanded(
                   child: Text(
-                    group.name,
+                    group['name'] ?? 'Unnamed Group',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -206,7 +189,7 @@ class _GroupsPageState extends State<GroupsPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${group.members.length} members',
+                    '${(group['participantIds'] as List).length} members',
                     style: const TextStyle(
                       fontSize: 11,
                       color: Colors.white70,
@@ -217,15 +200,31 @@ class _GroupsPageState extends State<GroupsPage> {
             ),
             const SizedBox(height: 12),
             // Member Avatars
-            // Member Avatars (wrapped)
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: group.members.take(9).map((member) {
+              children: (group['participantIds'] as List)
+                  .take(9)
+                  .map<Widget>((userId) {
+                final participant = participants[userId];
+                if (participant == null) {
+                  return SizedBox.shrink();
+                }
+
                 return CircleAvatar(
                   radius: 20,
-                  backgroundImage: NetworkImage(member.avatarUrl),
+                  backgroundImage: participant['photoURL'] != null &&
+                          participant['photoURL'].toString().isNotEmpty
+                      ? NetworkImage(participant['photoURL'])
+                      : null,
                   backgroundColor: Colors.grey[200],
+                  child: participant['photoURL'] == null ||
+                          participant['photoURL'].toString().isEmpty
+                      ? Text(participant['displayName'] != null &&
+                              participant['displayName'].toString().isNotEmpty
+                          ? participant['displayName'][0]
+                          : '?')
+                      : null,
                 );
               }).toList(),
             ),
@@ -235,38 +234,19 @@ class _GroupsPageState extends State<GroupsPage> {
     );
   }
 
-  Widget _buildMemberGrid(List<GroupMember> members) {
-    // Display up to 9 members in a grid
-    final displayMembers = members.length > 9 ? members.sublist(0, 9) : members;
-
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 5,
-        mainAxisSpacing: 5,
-      ),
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: displayMembers.length + (members.length > 9 ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index < displayMembers.length) {
-          return CircleAvatar(
-            backgroundImage: NetworkImage(displayMembers[index].avatarUrl),
-          );
-        } else {
-          // Show a "+X more" indicator if not all members are displayed
-          return CircleAvatar(
-            backgroundColor: Colors.grey[300],
-            child: Text(
-              "+${members.length - 9}",
-              style: TextStyle(color: Colors.black),
-            ),
-          );
-        }
-      },
-    );
-  }
-
   Widget _buildGroupDetailPage() {
+    if (selectedGroup == null) return SizedBox.shrink();
+
+    final participants = selectedGroup!['participants'] as Map<String, dynamic>;
+    final participantIds =
+        List<String>.from(selectedGroup!['participantIds'] ?? []);
+    final currentUserId = _auth.currentUser?.uid ?? '';
+
+    // Check if current user is admin
+    final currentUserParticipant = participants[currentUserId];
+    final isAdmin = currentUserParticipant != null &&
+        currentUserParticipant['role'] == 'admin';
+
     return WillPopScope(
       onWillPop: () async {
         setState(() {
@@ -274,7 +254,10 @@ class _GroupsPageState extends State<GroupsPage> {
         });
         return false;
       },
-      child: Column(
+      child: ListView(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).padding.bottom + 80,
+        ),
         children: [
           // Header with back button and group name
           Container(
@@ -295,7 +278,7 @@ class _GroupsPageState extends State<GroupsPage> {
                     children: [
                       Expanded(
                         child: Text(
-                          selectedGroup!.name,
+                          selectedGroup!['name'] ?? 'Unnamed Group',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -304,12 +287,11 @@ class _GroupsPageState extends State<GroupsPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.white),
-                        onPressed: () {
-                          _showEditGroupNameDialog();
-                        },
-                      ),
+                      if (isAdmin)
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.white),
+                          onPressed: _showEditGroupNameDialog,
+                        ),
                     ],
                   ),
                 ),
@@ -317,98 +299,322 @@ class _GroupsPageState extends State<GroupsPage> {
             ),
           ),
 
-          SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-
-          // Group members list
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.fromLTRB(
-                  16, 0, 16, MediaQuery.of(context).padding.bottom + 80),
-              itemCount: selectedGroup!.members.length +
-                  2, // Add Person + Create Schedule
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  // Add Person button
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16.0),
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.person_add),
-                      label: const Text('Add Person'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+          // Buttons: Chat + Create Schedule
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.chat),
+                  label: const Text('Group Chat'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                  ),
+                  onPressed: _openGroupChat,
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.calendar_today),
+                  label: const Text('Create Schedule'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GroupSchedulerForm(),
                       ),
-                      onPressed: () {
-                        _showAddPersonDialog();
-                      },
-                    ),
-                  );
-                } else if (index == selectedGroup!.members.length + 1) {
-                  // Create Schedule button at the bottom
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      top: 16.0,
-                      bottom: MediaQuery.of(context).padding.bottom + 16,
-                    ),
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.calendar_today),
-                      label: const Text('Create Schedule'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        elevation: 5,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const GroupSchedulerForm(),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }
-
-                // Group member
-                final member = selectedGroup!.members[index - 1];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: _buildMemberListItem(member),
-                );
-              },
+                    );
+                  },
+                ),
+              ],
             ),
           ),
+
+          // Add Person (admin only)
+          if (isAdmin)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.person_add),
+                label: const Text('Add Person'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: _showAddPersonDialog,
+              ),
+            ),
+
+          const SizedBox(height: 16),
+
+          // Member List
+          ...participantIds.map((userId) {
+            final participant = participants[userId];
+            if (participant == null) return SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: _buildMemberListItem(userId, participant),
+            );
+          }).toList(),
         ],
       ),
     );
   }
 
-  Widget _buildMemberListItem(GroupMember member) {
+  Widget _buildMemberListItem(String userId, Map<String, dynamic> participant) {
+    final currentUserId = _auth.currentUser?.uid ?? '';
+    final isCurrentUser = userId == currentUserId;
+    final isAdmin = participant['role'] == 'admin';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: NetworkImage(member.avatarUrl),
+          backgroundImage: participant['photoURL'] != null &&
+                  participant['photoURL'].toString().isNotEmpty
+              ? NetworkImage(participant['photoURL'])
+              : null,
+          child: participant['photoURL'] == null ||
+                  participant['photoURL'].toString().isEmpty
+              ? Text(participant['displayName'][0])
+              : null,
         ),
-        title: Text(member.name),
-        trailing: IconButton(
-          icon: Icon(Icons.remove_circle_outline, color: Colors.red[400]),
-          onPressed: () {
-            _showRemoveMemberDialog(member);
-          },
+        title: Text(
+          participant['displayName'] ?? 'Unknown',
+          style: TextStyle(
+            fontWeight: isAdmin ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
+        subtitle: isAdmin
+            ? Text('Admin', style: TextStyle(color: Colors.blue))
+            : null,
+        trailing: selectedGroup != null &&
+                selectedGroup!['participants'] != null &&
+                selectedGroup!['participants'][currentUserId] != null &&
+                selectedGroup!['participants'][currentUserId]['role'] ==
+                    'admin' &&
+                !isCurrentUser
+            ? IconButton(
+                icon: Icon(Icons.remove_circle_outline, color: Colors.red[400]),
+                onPressed: () {
+                  _showRemoveMemberDialog(userId, participant['displayName']);
+                },
+              )
+            : isCurrentUser && !isAdmin
+                ? TextButton(
+                    child: Text('Leave', style: TextStyle(color: Colors.red)),
+                    onPressed: () {
+                      _showLeaveGroupDialog();
+                    },
+                  )
+                : null,
         contentPadding: EdgeInsets.symmetric(horizontal: 4),
       ),
     );
   }
 
+  // void _showCreateGroupDialog() {
+  //   final TextEditingController nameController = TextEditingController();
+  //   List<String> selectedUserIds = [];
+
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => StatefulBuilder(
+  //       builder: (context, setDialogState) {
+  //         return AlertDialog(
+  //           title: Text('Create New Group'),
+  //           content: Container(
+  //             width: MediaQuery.of(context).size.width * 0.9,
+  //             height: MediaQuery.of(context).size.height * 0.6,
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 TextField(
+  //                   controller: nameController,
+  //                   decoration: InputDecoration(
+  //                     labelText: 'Group Name',
+  //                     hintText: 'Enter a name for your group',
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 16),
+  //                 const Text(
+  //                   'Select Members:',
+  //                   style: TextStyle(fontWeight: FontWeight.bold),
+  //                 ),
+  //                 const SizedBox(height: 8),
+  //                 Expanded(
+  //                   child: FutureBuilder<List<Map<String, dynamic>>>(
+  //                     future: _chatService.searchUsers(''),
+  //                     builder: (context, snapshot) {
+  //                       if (snapshot.connectionState ==
+  //                           ConnectionState.waiting) {
+  //                         return const Center(
+  //                             child: CircularProgressIndicator());
+  //                       }
+
+  //                       if (snapshot.hasError) {
+  //                         return const Text('Error loading users');
+  //                       }
+
+  //                       final users = snapshot.data ?? [];
+
+  //                       // Use SingleChildScrollView with Column instead of ListView.builder
+  //                       return SingleChildScrollView(
+  //                         child: Column(
+  //                           mainAxisSize: MainAxisSize.min,
+  //                           children: users.map((user) {
+  //                             final userId = user['id'];
+  //                             final isSelected =
+  //                                 selectedUserIds.contains(userId);
+
+  //                             return CheckboxListTile(
+  //                               value: isSelected,
+  //                               onChanged: (value) {
+  //                                 setDialogState(() {
+  //                                   if (value == true) {
+  //                                     selectedUserIds.add(userId);
+  //                                   } else {
+  //                                     selectedUserIds.remove(userId);
+  //                                   }
+  //                                 });
+  //                               },
+  //                               title: Text(user['displayName'] ?? 'Unknown'),
+  //                               secondary: CircleAvatar(
+  //                                 backgroundImage: user['photoURL'] != null
+  //                                     ? NetworkImage(user['photoURL'])
+  //                                     : null,
+  //                                 child: user['photoURL'] == null
+  //                                     ? Text((user['displayName'] as String)
+  //                                             .isNotEmpty
+  //                                         ? (user['displayName'] as String)[0]
+  //                                         : '?')
+  //                                     : null,
+  //                               ),
+  //                             );
+  //                           }).toList(),
+  //                         ),
+  //                       );
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //               onPressed: () => Navigator.pop(context),
+  //               child: Text('Cancel'),
+  //             ),
+  //             ElevatedButton(
+  //               onPressed: () async {
+  //                 if (nameController.text.trim().isEmpty) {
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     SnackBar(content: Text('Please enter a group name')),
+  //                   );
+  //                   return;
+  //                 }
+
+  //                 if (selectedUserIds.isEmpty) {
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     SnackBar(
+  //                         content: Text('Please select at least one member')),
+  //                   );
+  //                   return;
+  //                 }
+
+  //                 Navigator.pop(context);
+
+  //                 // Show loading dialog
+  //                 showDialog(
+  //                   context: context,
+  //                   barrierDismissible: false,
+  //                   builder: (context) =>
+  //                       Center(child: CircularProgressIndicator()),
+  //                 );
+
+  //                 try {
+  //                   final groupId = await _groupService.createGroupWithChat(
+  //                     groupName: nameController.text.trim(),
+  //                     memberIds: selectedUserIds,
+  //                   );
+
+  //                   _loadGroups(); // Refresh UI
+
+  //                   Navigator.pop(context); // Close loading dialog
+
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     SnackBar(content: Text('Group created successfully')),
+  //                   );
+  //                 } catch (e) {
+  //                   Navigator.pop(context); // Close loading dialog
+
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     SnackBar(content: Text('Error creating group: $e')),
+  //                   );
+  //                 }
+  //               },
+  //               child: Text('Create'),
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
+
+  void _showCreateGroupDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateGroupPage(
+          onCreateGroup: _createGroup,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createGroup(String groupName, List<String> memberIds) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final groupId = await _groupService.createGroupWithChat(
+        groupName: groupName,
+        memberIds: memberIds,
+      );
+
+      // Close loading dialog
+      Navigator.pop(context);
+
+      // Refresh UI
+      _loadGroups();
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Group created successfully')),
+      );
+    } catch (e) {
+      // Close loading dialog
+      Navigator.pop(context);
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error creating group: $e')),
+      );
+    }
+  }
+
   void _showEditGroupNameDialog() {
-    final TextEditingController controller =
-        TextEditingController(text: selectedGroup!.name);
+    if (selectedGroup == null) return;
+
+    final TextEditingController controller = TextEditingController(
+      text: selectedGroup!['name'] ?? '',
+    );
 
     showDialog(
       context: context,
@@ -430,17 +636,59 @@ class _GroupsPageState extends State<GroupsPage> {
           ),
           ElevatedButton(
             child: Text('Save'),
-            onPressed: () {
-              setState(() {
-                selectedGroup!.name = controller.text.trim();
-                // Update the group in the main list
-                final index =
-                    groups.indexWhere((g) => g.id == selectedGroup!.id);
-                if (index != -1) {
-                  groups[index].name = controller.text.trim();
-                }
-              });
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Group name cannot be empty')),
+                );
+                return;
+              }
+
               Navigator.of(context).pop();
+
+              // Show loading indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) =>
+                    Center(child: CircularProgressIndicator()),
+              );
+
+              try {
+                // Update group name in Firestore
+                await _firestore
+                    .collection('groups')
+                    .doc(selectedGroup!['id'])
+                    .update({'name': newName});
+
+                // Update conversation name as well
+                await _firestore
+                    .collection('conversations')
+                    .doc(selectedGroup!['linkedConversationId'])
+                    .update({'groupName': newName});
+
+                // Update local state
+                setState(() {
+                  selectedGroup!['name'] = newName;
+                });
+
+                // Close loading dialog
+                Navigator.pop(context);
+
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Group name updated')),
+                );
+              } catch (e) {
+                // Close loading dialog
+                Navigator.pop(context);
+
+                // Show error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error updating group name: $e')),
+                );
+              }
             },
           ),
         ],
@@ -449,21 +697,11 @@ class _GroupsPageState extends State<GroupsPage> {
   }
 
   void _showAddPersonDialog() {
-    // Mock new people that could be added
-    final List<GroupMember> potentialMembers = [
-      GroupMember(
-          id: 20,
-          name: 'Jamie Lee',
-          avatarUrl: 'https://i.pravatar.cc/150?img=20'),
-      GroupMember(
-          id: 21,
-          name: 'Sanjay Gupta',
-          avatarUrl: 'https://i.pravatar.cc/150?img=21'),
-      GroupMember(
-          id: 22,
-          name: 'Olivia Parker',
-          avatarUrl: 'https://i.pravatar.cc/150?img=22'),
-    ];
+    if (selectedGroup == null) return;
+
+    // Get current participant IDs to exclude from search
+    final currentParticipantIds =
+        List<String>.from(selectedGroup!['participantIds'] ?? []);
 
     showDialog(
       context: context,
@@ -471,42 +709,108 @@ class _GroupsPageState extends State<GroupsPage> {
         title: Text('Add Person to Group'),
         content: Container(
           width: double.maxFinite,
+          height: 300,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search people...',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(),
-                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text('Select people to add to the group:'),
               ),
-              SizedBox(height: 16),
-              Container(
-                height: 200,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: potentialMembers.length,
-                  itemBuilder: (context, index) {
-                    final member = potentialMembers[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundImage: NetworkImage(member.avatarUrl),
+              Expanded(
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future:
+                      _chatService.searchUsers(''), // Empty to get recent users
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Error loading users: ${snapshot.error}'),
+                      );
+                    }
+
+                    final users = snapshot.data ?? [];
+
+                    // Filter out users already in the group
+                    final filteredUsers = users
+                        .where((user) =>
+                            !currentParticipantIds.contains(user['id']))
+                        .toList();
+
+                    if (filteredUsers.isEmpty) {
+                      return Center(
+                        child: Text('No more users to add'),
+                      );
+                    }
+
+                    // Use SingleChildScrollView with Column instead of ListView.builder
+                    return SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: filteredUsers.map((user) {
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: user['photoURL'] != null
+                                  ? NetworkImage(user['photoURL'])
+                                  : null,
+                              child: user['photoURL'] == null
+                                  ? Text(
+                                      (user['displayName'] as String).isNotEmpty
+                                          ? (user['displayName'] as String)[0]
+                                          : '?')
+                                  : null,
+                            ),
+                            title: Text(user['displayName'] ?? 'Unknown'),
+                            subtitle: Text(user['userName'] ?? ''),
+                            onTap: () async {
+                              Navigator.pop(context);
+
+                              // Show loading indicator
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+
+                              try {
+                                await _groupService.addUserToGroup(
+                                  groupId: selectedGroup!['id'],
+                                  userId: user['id'],
+                                );
+
+                                // Refresh group data
+                                _loadGroups();
+
+                                // Close loading dialog
+                                Navigator.pop(context);
+
+                                // Show success message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        '${user['displayName']} added to the group'),
+                                  ),
+                                );
+                              } catch (e) {
+                                // Close loading dialog
+                                Navigator.pop(context);
+
+                                // Show error message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error adding user: $e'),
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        }).toList(),
                       ),
-                      title: Text(member.name),
-                      onTap: () {
-                        setState(() {
-                          // Add the new member to the group
-                          selectedGroup!.members.add(member);
-                          // Update the group in the main list
-                          final groupIndex = groups
-                              .indexWhere((g) => g.id == selectedGroup!.id);
-                          if (groupIndex != -1) {
-                            groups[groupIndex].members.add(member);
-                          }
-                        });
-                        Navigator.of(context).pop();
-                      },
                     );
                   },
                 ),
@@ -526,13 +830,15 @@ class _GroupsPageState extends State<GroupsPage> {
     );
   }
 
-  void _showRemoveMemberDialog(GroupMember member) {
+  void _showRemoveMemberDialog(String userId, String userName) {
+    if (selectedGroup == null) return;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Remove Member'),
-        content: Text(
-            'Are you sure you want to remove ${member.name} from this group?'),
+        content:
+            Text('Are you sure you want to remove $userName from this group?'),
         actions: [
           TextButton(
             child: Text('Cancel'),
@@ -545,23 +851,135 @@ class _GroupsPageState extends State<GroupsPage> {
               foregroundColor: Colors.red,
             ),
             child: Text('Remove'),
-            onPressed: () {
-              setState(() {
-                // Remove the member from the group
-                selectedGroup!.members.removeWhere((m) => m.id == member.id);
-                // Update the group in the main list
-                final groupIndex =
-                    groups.indexWhere((g) => g.id == selectedGroup!.id);
-                if (groupIndex != -1) {
-                  groups[groupIndex]
-                      .members
-                      .removeWhere((m) => m.id == member.id);
-                }
-              });
-              Navigator.of(context).pop();
+            onPressed: () async {
+              Navigator.pop(context);
+
+              // Show loading indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) =>
+                    Center(child: CircularProgressIndicator()),
+              );
+
+              try {
+                await _groupService.removeUserFromGroup(
+                  groupId: selectedGroup!['id'],
+                  userId: userId,
+                );
+
+                // Refresh group data
+                _loadGroups();
+
+                // Close loading dialog
+                Navigator.pop(context);
+
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('$userName removed from the group')),
+                );
+              } catch (e) {
+                // Close loading dialog
+                Navigator.pop(context);
+
+                // Show error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error removing user: $e')),
+                );
+              }
             },
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLeaveGroupDialog() {
+    if (selectedGroup == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Leave Group'),
+        content: Text('Are you sure you want to leave this group?'),
+        actions: [
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: Text('Leave'),
+            onPressed: () async {
+              Navigator.pop(context);
+
+              // Show loading indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) =>
+                    Center(child: CircularProgressIndicator()),
+              );
+
+              try {
+                await _groupService.removeUserFromGroup(
+                  groupId: selectedGroup!['id'],
+                  userId: _auth.currentUser?.uid ?? '',
+                );
+
+                // Close loading dialog
+                Navigator.pop(context);
+
+                // Go back to groups list
+                setState(() {
+                  selectedGroup = null;
+                });
+
+                // Refresh groups list
+                _loadGroups();
+
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('You have left the group')),
+                );
+              } catch (e) {
+                // Close loading dialog
+                Navigator.pop(context);
+
+                // Show error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error leaving group: $e')),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openGroupChat() {
+    if (selectedGroup == null) return;
+
+    final conversationId = selectedGroup!['linkedConversationId'];
+    if (conversationId == null || conversationId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No linked conversation found')),
+      );
+      return;
+    }
+
+    // Navigate to chat screen
+    // Replace this with your actual navigation logic to the chat screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            ChatScreen(conversationId: conversationId), // Create this screen
       ),
     );
   }
