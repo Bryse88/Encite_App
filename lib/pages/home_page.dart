@@ -1,8 +1,9 @@
 import 'dart:ui';
+import 'package:encite/components/Colors/uber_colors.dart';
 import 'package:encite/components/Schedule/schedule_presentation_page.dart';
 import 'package:encite/models/schedule.dart';
 import 'package:encite/pages/events_page.dart';
-import 'package:encite/components/ProfileComponents/ExtraPages/AddFriendScreen.dart';
+import 'package:encite/pages/friends/AddFriendScreen.dart';
 import 'package:encite/pages/solo_scheduler_form.dart';
 import 'package:encite/services/schedule_service.dart';
 import 'package:flutter/material.dart';
@@ -13,19 +14,6 @@ import 'package:encite/components/Navigation/location_widget.dart';
 import 'package:encite/pages/group_page.dart';
 import 'package:encite/pages/messaging_page.dart';
 import 'package:intl/intl.dart';
-
-// Uber-inspired color constants
-class UberColors {
-  static const Color primary = Color(0xFF276EF1); // Uber Blue
-  static const Color background = Color(0xFF121212); // Very dark gray/black
-  static const Color surface = Color(0xFF1C1C1E); // Slightly lighter dark
-  static const Color cardBg = Color(0xFF222222); // Card background
-  static const Color textPrimary = Color(0xFFFFFFFF); // White
-  static const Color textSecondary = Color(0xFFAAAAAA); // Light gray
-  static const Color accent = Color(0xFF15D071); // Success green
-  static const Color divider = Color(0xFF2A2A2A); // Dark gray divider
-  static const Color error = Color(0xFFE51919); // Error/alert red
-}
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -40,6 +28,9 @@ class _HomePageState extends State<HomePage>
   String _firstName = '';
   bool _isLoading = true;
   bool isAvailable = true;
+  List<Map<String, dynamic>> _notifications = [];
+  int _unreadNotificationCount = 0;
+  bool _loadingNotifications = true;
 
   // MyDay related state properties
   DateTime _selectedDate = DateTime.now();
@@ -79,31 +70,7 @@ class _HomePageState extends State<HomePage>
     },
   ];
 
-  List<Map<String, dynamic>> _upcomingEvents = [
-    {
-      'isGroup': true,
-      'groupName': 'Study Group',
-      'title': 'Final Exam Prep',
-      'time': '3:30 PM - 5:00 PM',
-      'location': 'Library, Room 204',
-      'participants': 5,
-    },
-    {
-      'isGroup': false,
-      'title': 'Dentist Appointment',
-      'time': 'Tomorrow, 10:00 AM',
-      'location': 'Smile Dental Clinic',
-      'participants': 0,
-    },
-    {
-      'isGroup': true,
-      'groupName': 'Soccer Team',
-      'title': 'Weekly Practice',
-      'time': 'Saturday, 9:00 AM',
-      'location': 'Central Park Field',
-      'participants': 12,
-    },
-  ];
+  List<Map<String, dynamic>> _upcomingEvents = [];
 
   // Add schedule list to store fetched schedules
   List<Schedule> _userSchedules = [];

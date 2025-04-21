@@ -8,8 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:encite/components/Colors/uber_colors.dart';
 
-// Import the UberColors class we created earlier
-
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
 
@@ -19,7 +17,6 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  // Add this to implement AutomaticKeepAliveClientMixin
   @override
   bool get wantKeepAlive => true;
 
@@ -27,7 +24,10 @@ class _ProfilePageState extends State<ProfilePage>
   Map<String, dynamic>? userData; // nullable to allow loading
   bool _isDataInitialized = false;
 
-  // Mock data for testing UI
+  // Counters for statistics
+  int _friendsCount = 0;
+  int _groupsCount = 0;
+  int _schedulesCount = 0;
 
   @override
   void initState() {
@@ -84,13 +84,75 @@ class _ProfilePageState extends State<ProfilePage>
           ? List<String>.from(onboardingDoc.data()?['tags'] ?? [])
           : <String>[];
 
+      // Fetch user stats for friend count and other metrics
+      final statsDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('stats')
+          .doc('counters')
+          .get();
+
+      // Get friend count from stats
+      int friendsCount = 0;
+      int groupsCount = 0;
+      int schedulesCount = 0;
+
+      if (statsDoc.exists) {
+        // Use stored counters directly
+        friendsCount = statsDoc.data()?['friendCount'] ?? 0;
+        groupsCount = statsDoc.data()?['groupCount'] ?? 0;
+        schedulesCount = statsDoc.data()?['scheduleCount'] ?? 0;
+      } else {
+        // Initialize counters document if it doesn't exist yet
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('stats')
+            .doc('counters')
+            .set({
+          'friendCount': 0,
+          'groupCount': 0,
+          'scheduleCount': 0,
+          'lastUpdated': FieldValue.serverTimestamp(),
+        });
+
+        // Counters are all 0 since we just initialized them
+      }
+
+      // Fetch recent activity (optional)
+      final activityQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('activity')
+          .orderBy('timestamp', descending: true)
+          .limit(5)
+          .get();
+
+      List<Map<String, dynamic>> recentActivity = [];
+
+      for (var doc in activityQuery.docs) {
+        final data = doc.data();
+        final timestamp = data['timestamp'] as Timestamp?;
+
+        recentActivity.add({
+          'id': doc.id,
+          'type': data['type'] ?? 'Event',
+          'title': data['title'] ?? 'Unknown activity',
+          'time': timestamp != null ? _formatTimestamp(timestamp) : 'Recently',
+        });
+      }
+
       if (mounted) {
         setState(() {
           userData = {
             'uid': uid,
             ...?userDoc.data() as Map<String, dynamic>?,
             'identityTags': identityTags,
+            'recentActivity': recentActivity,
           };
+          _friendsCount = friendsCount;
+          _groupsCount = groupsCount;
+          _schedulesCount = schedulesCount;
           _isDataInitialized = true;
         });
       }
@@ -99,9 +161,26 @@ class _ProfilePageState extends State<ProfilePage>
     }
   }
 
+  // Helper function to format timestamps
+  String _formatTimestamp(Timestamp timestamp) {
+    final now = DateTime.now();
+    final date = timestamp.toDate();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours} hours ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
   void navigateToEditProfile() {
-    // Add navigation to edit profile page
-    print('Navigate to edit profile');
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => EditProfilePage()),
@@ -112,16 +191,47 @@ class _ProfilePageState extends State<ProfilePage>
     Navigator.pushNamed(context, '/settings');
   }
 
-  void navigateToFriendsPage() {
-    print('Navigate to friends page');
-    Navigator.push(
+  Future<void> navigateToFriendsPage() async {
+    await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const FriendsPage()),
+      MaterialPageRoute(builder: (context) => FriendsPage()),
     );
+
+    // Refresh friend count when returning from FriendsPage
+    refreshFriendsCount();
+  }
+
+  // Method to refresh just the friend count
+  Future<void> refreshFriendsCount() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final uid = user.uid;
+
+      // Get the stats document with the counter
+      final statsDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('stats')
+          .doc('counters')
+          .get();
+
+      if (statsDoc.exists) {
+        final friendsCount = statsDoc.data()?['friendCount'] ?? 0;
+
+        if (mounted) {
+          setState(() {
+            _friendsCount = friendsCount;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error refreshing friends count: $e');
+    }
   }
 
   void navigateToGroupsPage() {
-    print('Navigate to groups page');
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => GroupsPage()),
@@ -129,7 +239,6 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   void navigateToSchedulesPage() {
-    print('Navigate to schedules page');
     // Navigator.push(
     //   context,
     //   MaterialPageRoute(builder: (context) => const SchedulesPage()),
@@ -144,7 +253,6 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
-    // Call super.build to satisfy AutomaticKeepAliveClientMixin
     super.build(context);
 
     return Scaffold(
@@ -158,7 +266,6 @@ class _ProfilePageState extends State<ProfilePage>
             )
           : Stack(
               children: [
-                // Background with subtle gradient
                 Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
@@ -168,14 +275,11 @@ class _ProfilePageState extends State<ProfilePage>
                     ),
                   ),
                 ),
-                // Content
                 SafeArea(
                     child: SingleChildScrollView(
-                  // 🟢 Wrap the entire content here
                   physics: const BouncingScrollPhysics(),
                   child: Padding(
-                    padding: const EdgeInsets.only(
-                        bottom: 32.0), // optional bottom padding
+                    padding: const EdgeInsets.only(bottom: 32.0),
                     child: Column(
                       children: [
                         // Header with title and settings button
@@ -227,7 +331,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   height: MediaQuery.of(context).size.height *
                                       0.02),
                               // Impaler bar (visual element)
-                              buildImpalerBar(userData!),
+                              buildImpalerBar(),
                               SizedBox(
                                   height: MediaQuery.of(context).size.height *
                                       0.02),
@@ -256,7 +360,8 @@ class _ProfilePageState extends State<ProfilePage>
                               ),
                               SizedBox(
                                   height: MediaQuery.of(context).size.height *
-                                      0.02), // Logout button
+                                      0.02),
+                              // Logout button
                               buildLogoutButton(context),
                               // Bottom padding
                               SizedBox(
@@ -364,10 +469,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget buildImpalerBar(Map<String, dynamic> userData) {
-    final groupNumber = userData['groupNumber'] ?? '0';
-    final friendsNumber = userData['friendsNumber'] ?? '0';
-    final schedulesCreated = userData['schedulesCreated'] ?? '0';
+  Widget buildImpalerBar() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -387,17 +489,17 @@ class _ProfilePageState extends State<ProfilePage>
         children: [
           GestureDetector(
             onTap: navigateToGroupsPage,
-            child: _buildStat(groupNumber, 'Groups'),
+            child: _buildStat(_groupsCount.toString(), 'Groups'),
           ),
           _buildVerticalDivider(),
           GestureDetector(
             onTap: navigateToFriendsPage,
-            child: _buildStat(friendsNumber, 'Friends'),
+            child: _buildStat(_friendsCount.toString(), 'Friends'),
           ),
           _buildVerticalDivider(),
           GestureDetector(
             onTap: navigateToSchedulesPage,
-            child: _buildStat(schedulesCreated, 'Schedules'),
+            child: _buildStat(_schedulesCount.toString(), 'Schedules'),
           ),
         ],
       ),
@@ -443,7 +545,7 @@ class _ProfilePageState extends State<ProfilePage>
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -490,9 +592,44 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget buildRecentActivityFixed(Map<String, dynamic> userData) {
-    final recentActivity = (userData['recentActivity'] ?? []) as List<dynamic>;
+    // Check if we have any recent activity data
+    final recentActivity = userData['recentActivity'] as List<dynamic>?;
 
-    if (recentActivity.isEmpty) return const SizedBox.shrink();
+    if (recentActivity == null || recentActivity.isEmpty) {
+      // If no data, return empty state
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.hourglass_empty_outlined,
+                color: UberColors.textSecondary,
+                size: 48,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'No recent activity',
+                style: TextStyle(
+                  color: UberColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Your recent interactions will appear here',
+                style: TextStyle(
+                  color: UberColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -577,7 +714,7 @@ class _ProfilePageState extends State<ProfilePage>
         break;
       case 'Schedule':
         iconData = Icons.calendar_today_outlined;
-        iconColor = Color(0xFFFFC043); // Amber
+        iconColor = const Color(0xFFFFC043); // Amber
         break;
       default:
         iconData = Icons.circle_outlined;
@@ -617,6 +754,7 @@ class _ProfilePageState extends State<ProfilePage>
             borderRadius: BorderRadius.circular(12),
             onTap: () async {
               await signUserOut();
+              if (!context.mounted) return;
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const AuthWrapper()),

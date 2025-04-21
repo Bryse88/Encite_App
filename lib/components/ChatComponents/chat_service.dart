@@ -236,7 +236,8 @@ class ChatService {
 
     // Create participant documents
     final currentUserParticipant = ParticipantInfo(
-      displayName: currentUserData['displayName'] ?? '',
+      displayName:
+          currentUserData['name'] ?? '', // Changed from 'displayName' to 'name'
       photoURL: currentUserData['photoURL'] ?? '',
       lastSeen: timestamp,
       typing: false,
@@ -245,7 +246,8 @@ class ChatService {
     );
 
     final otherUserParticipant = ParticipantInfo(
-      displayName: otherUserData['displayName'] ?? '',
+      displayName:
+          otherUserData['name'] ?? '', // Changed from 'displayName' to 'name'
       photoURL: otherUserData['photoURL'] ?? '',
       lastSeen: timestamp,
       typing: false,
@@ -548,28 +550,31 @@ class ChatService {
   }
 
   // Search for users to start a conversation with
+  // Search for users to start a conversation with
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
     if (query.trim().isEmpty) {
       return [];
     }
 
     final queryLower = query.toLowerCase();
-    final usersSnapshot = await _firestore
+
+    // Query for username matches
+    final usernameQuery = await _firestore
         .collection('users')
-        .where('displayNameLower', isGreaterThanOrEqualTo: queryLower)
-        .where('displayNameLower', isLessThanOrEqualTo: queryLower + '\uf8ff')
+        .where('userName', isGreaterThanOrEqualTo: queryLower)
+        .where('userName', isLessThanOrEqualTo: queryLower + '\uf8ff')
         .limit(10)
         .get();
 
-    final results = usersSnapshot.docs
+    final results = usernameQuery.docs
         .where((doc) => doc.id != currentUserId) // Exclude current user
         .map((doc) {
       final data = doc.data();
       return {
         'id': doc.id,
-        'displayName': data['displayName'] ?? '',
+        'displayName': data['name'] ?? '', // This maps 'name' to 'displayName'
         'photoURL': data['photoURL'] ?? '',
-        'email': data['email'] ?? '',
+        'userName': data['userName'] ?? '',
       };
     }).toList();
 
@@ -634,7 +639,7 @@ class ChatService {
         .where((doc) => doc.id != currentUserId) // Exclude current user
         .map((doc) {
       final data = doc.data() as Map<String, dynamic>;
-      return data['displayName'] as String? ?? 'Unknown User';
+      return data['name'] as String? ?? 'Unknown User';
     }).toList();
   }
 

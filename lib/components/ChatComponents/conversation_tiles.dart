@@ -19,6 +19,7 @@ class ConversationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayName = conversation.getDisplayName(currentUserId);
+    print("DEBUG - Display Name: '$displayName'"); // Add this line
     final photoURL = conversation.getPhotoURL(currentUserId);
 
     // Get the timestamp for the last message

@@ -24,19 +24,23 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Store user data in Firestore
-  Future<void> _storeUserData(User user, {String? displayName}) async {
+  Future<void> _storeUserData(User user,
+      {String? displayName, String? email}) async {
     try {
-      // Use provided name if user name is null or empty
-      final name =
-          user.displayName?.isNotEmpty == true ? user.displayName : displayName;
+      final name = (user.displayName?.isNotEmpty == true)
+          ? user.displayName
+          : (displayName?.isNotEmpty == true)
+              ? displayName
+              : "Encite User";
+
       final userName = await generateAndSaveUsername(
         fullName: name ?? '',
         uid: user.uid,
       );
 
-      await _firestore.collection('users').doc(user.uid).set({
+      final userData = {
         'uid': user.uid,
-        'email': user.email,
+        'email': user.email ?? email,
         'name': name,
         'photoURL': user.photoURL,
         'userName': userName,
@@ -46,10 +50,16 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
         'provider': user.providerData.isNotEmpty
             ? user.providerData[0].providerId
             : 'unknown',
-      }, SetOptions(merge: true)); // Use merge to update existing data
-    } catch (e) {
-      print('Error storing user data: $e');
-      // Continue flow even if data storage fails
+      };
+
+      print('📦 Storing user data: $userData');
+
+      await _firestore.collection('users').doc(user.uid).set(
+            userData,
+            SetOptions(merge: true),
+          );
+    } catch (e, st) {
+      print('❌ Error storing user data: $e\n$st');
     }
   }
 
@@ -97,52 +107,51 @@ class _SocialAuthButtonsState extends State<SocialAuthButtons> {
     }
   }
 
-// Similarly modify the _signInWithApple method
   Future<void> _signInWithApple(BuildContext context) async {
     try {
       setState(() => _isLoading = true);
 
-      // Begin Apple sign in flow
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName
+          AppleIDAuthorizationScopes.fullName,
         ],
       );
 
-      // Create full name from Apple credential if available
-      String? fullName;
-      if (appleCredential.givenName != null ||
-          appleCredential.familyName != null) {
-        fullName = [
-          appleCredential.givenName ?? '',
-          appleCredential.familyName ?? ''
-        ].where((name) => name.isNotEmpty).join(' ');
-      }
+      final fullName = [
+        appleCredential.givenName ?? '',
+        appleCredential.familyName ?? ''
+      ].where((n) => n.isNotEmpty).join(' ').trim();
+      final email = appleCredential.email;
 
-      // Get Apple OAuth provider credential
       final oauthCredential = OAuthProvider("apple.com").credential(
         idToken: appleCredential.identityToken,
         accessToken: appleCredential.authorizationCode,
       );
 
-      // Sign in to Firebase
       final userCredential = await _auth.signInWithCredential(oauthCredential);
+      final user = userCredential.user;
+      final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
 
-      // Store user data (including name from Apple)
-      if (userCredential.user != null) {
-        await _storeUserData(userCredential.user!,
-            displayName: fullName?.isNotEmpty == true ? fullName : null);
+      if (user != null) {
+        print('✅ Apple UID: ${user.uid}');
+        print('📧 Apple Email: ${user.email} | From Apple: $email');
+        print('🧍 Apple Name: $fullName');
+        print('🆕 New user? $isNewUser');
 
-        // Make sure we're still mounted before navigating
+        await _storeUserData(
+          user,
+          displayName: isNewUser ? fullName : null,
+          email: isNewUser ? email : null,
+        );
+
         if (mounted) {
-          setState(() =>
-              _isLoading = false); // Reset loading state before navigation
+          setState(() => _isLoading = false);
           _navigateToHome();
         }
       }
     } catch (e) {
-      print('Apple sign-in error: $e'); // Add logging
+      print('❌ Apple sign-in error: $e');
       _showError(context, 'Apple sign-in failed: ${_getReadableError(e)}');
       if (mounted) setState(() => _isLoading = false);
     }

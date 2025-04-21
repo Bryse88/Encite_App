@@ -75,15 +75,30 @@ class Conversation {
   }
 
   String getDisplayName(String currentUserId) {
+    // For group conversations, show the group name
     if (isGroup) {
       return groupName ?? 'Group Chat';
-    } else {
-      // For direct chats, get the other participant
+    }
+
+    // For one-on-one conversations, show the other person's name
+    else {
+      // Find the participant who is not the current user
       final otherParticipantId = participantIds.firstWhere(
         (id) => id != currentUserId,
         orElse: () => '',
       );
-      return participants[otherParticipantId]?.displayName ?? 'Unknown User';
+
+      if (otherParticipantId.isEmpty) {
+        return 'Unknown User';
+      }
+
+      // Get the participant info from the participants map
+      final participantInfo = participants[otherParticipantId];
+      if (participantInfo == null) {
+        return 'Unknown User';
+      }
+
+      return participantInfo.displayName;
     }
   }
 
@@ -119,8 +134,9 @@ class ParticipantInfo {
 
   factory ParticipantInfo.fromMap(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    print("DEBUG - Participant data: $data"); // Add this line
     return ParticipantInfo(
-      displayName: data['displayName'] ?? '',
+      displayName: data['name'] ?? '',
       photoURL: data['photoURL'] ?? '',
       lastSeen: (data['lastSeen'] as Timestamp?)?.toDate() ?? DateTime.now(),
       typing: data['typing'] ?? false,
@@ -131,7 +147,7 @@ class ParticipantInfo {
 
   Map<String, dynamic> toMap() {
     return {
-      'displayName': displayName,
+      'name': displayName,
       'photoURL': photoURL,
       'lastSeen': Timestamp.fromDate(lastSeen),
       'typing': typing,

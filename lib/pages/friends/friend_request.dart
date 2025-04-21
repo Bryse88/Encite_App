@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:encite/components/ProfileComponents/ExtraPages/AddFriendScreen.dart';
+import 'package:encite/pages/friends/AddFriendScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:encite/components/Colors/uber_colors.dart';
@@ -14,13 +14,16 @@ class FriendsPage extends StatefulWidget {
 
 class _FriendsPageState extends State<FriendsPage>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  // Add this to implement AutomaticKeepAliveClientMixin
   @override
   bool get wantKeepAlive => true;
 
   late AnimationController _animationController;
-  Map<String, dynamic>? userData; // nullable to allow loading
-  bool _isDataInitialized = false;
+
+  // Data structure to hold user information
+  List<Map<String, dynamic>> _friendsList = [];
+  List<Map<String, dynamic>> _requestsList = [];
+
+  bool _isLoading = true;
   bool _showRequests = false; // Toggle between friends and requests
 
   @override
@@ -31,228 +34,423 @@ class _FriendsPageState extends State<FriendsPage>
       vsync: this,
     )..repeat(reverse: true);
 
-    // Only fetch data if it hasn't been initialized yet
-    if (!_isDataInitialized) {
-      fetchUserData();
-    }
+    // Fetch data on init
+    fetchUserData();
   }
 
   Future<void> fetchUserData() async {
-    // Don't fetch if data is already loaded
-    if (_isDataInitialized) return;
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
 
       final uid = user.uid;
 
-      // Fetch base user doc
-      final userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-
-      // Fetch friends list
-      final friendsDoc = await FirebaseFirestore.instance
+      // Fetch friends list using the new structure
+      final friendsCollection = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('friends')
-          .doc('friendsList')
           .get();
 
-      final List<Map<String, dynamic>> friendsList = [];
-      final List<dynamic> friendsIds = friendsDoc.exists
-          ? List<dynamic>.from(friendsDoc.data()?['friends'] ?? [])
-          : <dynamic>[];
+      List<Map<String, dynamic>> friendsList = [];
 
-      // Fetch friend requests
-      final requestsDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('friends')
-          .doc('requests')
-          .get();
-
-      final List<Map<String, dynamic>> requestsList = [];
-      final List<dynamic> requestsIds = requestsDoc.exists
-          ? List<dynamic>.from(requestsDoc.data()?['pending'] ?? [])
-          : <dynamic>[];
-
-      // Fetch friend details
-      for (final friendId in friendsIds) {
-        final friendData = await FirebaseFirestore.instance
+      // Fetch details for each friend
+      for (var friendDoc in friendsCollection.docs) {
+        final friendId = friendDoc.id;
+        final userData = await FirebaseFirestore.instance
             .collection('users')
             .doc(friendId)
             .get();
 
-        if (friendData.exists) {
+        if (userData.exists && userData.data() != null) {
+          final data = userData.data()!;
           friendsList.add({
             'uid': friendId,
-            'name': friendData.data()?['name'] ?? 'Unknown User',
-            'photoURL':
-                friendData.data()?['photoURL'] ?? 'https://i.pravatar.cc/300',
-            'lastActive': friendData.data()?['lastActive'] ?? 'Recently',
+            'name': data['name'] ?? data['userName'] ?? 'Unknown User',
+            'photoURL': data['photoURL'] ?? 'https://i.pravatar.cc/300',
+            'lastActive': data['lastActive'] ?? 'Recently',
           });
         }
       }
 
-      // Fetch request details
-      for (final requestId in requestsIds) {
-        final requestData = await FirebaseFirestore.instance
+      // Fetch incoming friend requests
+      final requestsCollection = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('incomingRequests')
+          .get();
+
+      List<Map<String, dynamic>> requestsList = [];
+
+      // Fetch details for each request
+      for (var requestDoc in requestsCollection.docs) {
+        final requesterId = requestDoc.id;
+        final userData = await FirebaseFirestore.instance
             .collection('users')
-            .doc(requestId)
+            .doc(requesterId)
             .get();
 
-        if (requestData.exists) {
+        if (userData.exists && userData.data() != null) {
+          final data = userData.data()!;
+          // Get timestamp from the request document
+          final timestamp = requestDoc.data()['timestamp'] as Timestamp?;
+          final requestTime =
+              timestamp != null ? _formatTimestamp(timestamp) : 'Recently';
+
           requestsList.add({
-            'uid': requestId,
-            'name': requestData.data()?['name'] ?? 'Unknown User',
-            'photoURL':
-                requestData.data()?['photoURL'] ?? 'https://i.pravatar.cc/300',
-            'requestTime':
-                'Today', // You might want to fetch the actual request time
+            'uid': requesterId,
+            'name': data['name'] ?? data['userName'] ?? 'Unknown User',
+            'photoURL': data['photoURL'] ?? 'https://i.pravatar.cc/300',
+            'requestTime': requestTime,
           });
         }
       }
 
       if (mounted) {
         setState(() {
-          userData = {
-            'uid': uid,
-            ...?userDoc.data() as Map<String, dynamic>?,
-            'friendsList': friendsList,
-            'requestsList': requestsList,
-          };
-          _isDataInitialized = true;
+          _friendsList = friendsList;
+          _requestsList = requestsList;
+          _isLoading = false;
         });
       }
     } catch (e) {
       print('Error fetching user data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  Future<void> acceptFriendRequest(String requestId) async {
+  String _formatTimestamp(Timestamp timestamp) {
+    final now = DateTime.now();
+    final date = timestamp.toDate();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inHours < 1) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inDays < 1) {
+      return '${difference.inHours} hours ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  Future<void> acceptFriendRequest(String requesterId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
 
       final uid = user.uid;
+      final batch = FirebaseFirestore.instance.batch();
 
-      // Get current friend requests
-      final requestsDoc = await FirebaseFirestore.instance
+      // First get requester data from incoming request
+      final requestDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .collection('friends')
-          .doc('requests')
+          .collection('incomingRequests')
+          .doc(requesterId)
           .get();
 
-      final List<dynamic> currentRequests = requestsDoc.exists
-          ? List<dynamic>.from(requestsDoc.data()?['pending'] ?? [])
-          : <dynamic>[];
+      final requesterData = requestDoc.data() ?? {};
 
-      // Remove from requests
-      currentRequests.remove(requestId);
+      // Get current user data
+      final currentUserDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
-      // Update requests document
-      await FirebaseFirestore.instance
+      final currentUserData = currentUserDoc.data() ?? {};
+
+      // 1. Add requester to current user's friends collection
+      batch.set(
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('friends')
+              .doc(requesterId),
+          {
+            'timestamp': FieldValue.serverTimestamp(),
+            'userName': requesterData['userName'] ?? 'Unknown',
+            'email': requesterData['email'] ?? '',
+            'photoUrl': requesterData['photoUrl'] ?? '',
+          });
+
+      // 2. Add current user to requester's friends collection
+      batch.set(
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(requesterId)
+              .collection('friends')
+              .doc(uid),
+          {
+            'timestamp': FieldValue.serverTimestamp(),
+            'userName': currentUserData['userName'] ?? 'Unknown',
+            'email': currentUserData['email'] ?? '',
+            'photoUrl': currentUserData['photoURL'] ?? '',
+          });
+
+      // 3. Update friend count in stats collection for both users
+      batch.set(
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('stats')
+              .doc('counters'),
+          {
+            'friendCount': FieldValue.increment(1),
+            'lastUpdated': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
+
+      batch.set(
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(requesterId)
+              .collection('stats')
+              .doc('counters'),
+          {
+            'friendCount': FieldValue.increment(1),
+            'lastUpdated': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
+
+      // 4. Delete from current user's incoming requests
+      batch.delete(FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .collection('friends')
-          .doc('requests')
-          .set({
-        'pending': currentRequests,
+          .collection('incomingRequests')
+          .doc(requesterId));
+
+      // 5. Delete from requester's outgoing requests
+      batch.delete(FirebaseFirestore.instance
+          .collection('users')
+          .doc(requesterId)
+          .collection('outgoingRequests')
+          .doc(uid));
+
+      // Execute the batch
+      await batch.commit();
+
+      // Update local data
+      final request = _requestsList.firstWhere(
+        (req) => req['uid'] == requesterId,
+        orElse: () => {'uid': requesterId, 'name': 'Unknown'},
+      );
+
+      setState(() {
+        _requestsList.removeWhere((req) => req['uid'] == requesterId);
+        _friendsList.add({
+          'uid': requesterId,
+          'name': request['name'],
+          'photoURL': request['photoURL'] ?? 'https://i.pravatar.cc/300',
+          'lastActive': 'Just now',
+        });
+        _isLoading = false;
       });
 
-      // Get current friends list
-      final friendsDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('friends')
-          .doc('friendsList')
-          .get();
-
-      final List<dynamic> currentFriends = friendsDoc.exists
-          ? List<dynamic>.from(friendsDoc.data()?['friends'] ?? [])
-          : <dynamic>[];
-
-      // Add to friends list
-      currentFriends.add(requestId);
-
-      // Update friends document
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('friends')
-          .doc('friendsList')
-          .set({
-        'friends': currentFriends,
-      });
-
-      // Also add the current user to the requester's friends list
-      final requesterFriendsDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(requestId)
-          .collection('friends')
-          .doc('friendsList')
-          .get();
-
-      final List<dynamic> requesterFriends = requesterFriendsDoc.exists
-          ? List<dynamic>.from(requesterFriendsDoc.data()?['friends'] ?? [])
-          : <dynamic>[];
-
-      requesterFriends.add(uid);
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(requestId)
-          .collection('friends')
-          .doc('friendsList')
-          .set({
-        'friends': requesterFriends,
-      });
-
-      // Refresh the UI
-      fetchUserData();
+      // Show success message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Friend request accepted'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       print('Error accepting friend request: $e');
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Show error message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error accepting request: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
-  Future<void> declineFriendRequest(String requestId) async {
+  Future<void> declineFriendRequest(String requesterId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
 
       final uid = user.uid;
+      final batch = FirebaseFirestore.instance.batch();
 
-      // Get current friend requests
-      final requestsDoc = await FirebaseFirestore.instance
+      // 1. Delete from current user's incoming requests
+      final incomingRequestRef = FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .collection('friends')
-          .doc('requests')
-          .get();
+          .collection('incomingRequests')
+          .doc(requesterId);
 
-      final List<dynamic> currentRequests = requestsDoc.exists
-          ? List<dynamic>.from(requestsDoc.data()?['pending'] ?? [])
-          : <dynamic>[];
+      batch.delete(incomingRequestRef);
 
-      // Remove from requests
-      currentRequests.remove(requestId);
-
-      // Update requests document
-      await FirebaseFirestore.instance
+      // 2. Delete from requester's outgoing requests
+      final outgoingRequestRef = FirebaseFirestore.instance
           .collection('users')
-          .doc(uid)
-          .collection('friends')
-          .doc('requests')
-          .set({
-        'pending': currentRequests,
+          .doc(requesterId)
+          .collection('outgoingRequests')
+          .doc(uid);
+
+      batch.delete(outgoingRequestRef);
+
+      // Execute the batch
+      await batch.commit();
+
+      // Remove from the requests list
+      setState(() {
+        _requestsList.removeWhere((request) => request['uid'] == requesterId);
+        _isLoading = false;
       });
 
-      // Refresh the UI
-      fetchUserData();
+      // Show success message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Friend request declined'),
+          backgroundColor: Colors.grey,
+        ),
+      );
     } catch (e) {
       print('Error declining friend request: $e');
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Show error message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error declining request: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> removeFriend(String friendId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final uid = user.uid;
+      final batch = FirebaseFirestore.instance.batch();
+
+      // 1. Remove from current user's friends collection
+      batch.delete(FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('friends')
+          .doc(friendId));
+
+      // 2. Remove from friend's friends collection
+      batch.delete(FirebaseFirestore.instance
+          .collection('users')
+          .doc(friendId)
+          .collection('friends')
+          .doc(uid));
+
+      // 3. Update friend count in stats collection for both users
+      batch.set(
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('stats')
+              .doc('counters'),
+          {
+            'friendCount': FieldValue.increment(-1),
+            'lastUpdated': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
+
+      batch.set(
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(friendId)
+              .collection('stats')
+              .doc('counters'),
+          {
+            'friendCount': FieldValue.increment(-1),
+            'lastUpdated': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
+
+      // Execute the batch
+      await batch.commit();
+
+      // Update local data
+      setState(() {
+        _friendsList.removeWhere((friend) => friend['uid'] == friendId);
+        _isLoading = false;
+      });
+
+      // Show success message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Friend removed'),
+          backgroundColor: Colors.grey,
+        ),
+      );
+    } catch (e) {
+      print('Error removing friend: $e');
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Show error message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error removing friend: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -284,8 +482,16 @@ class _FriendsPageState extends State<FriendsPage>
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          // Refresh button
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            color: UberColors.textPrimary,
+            onPressed: fetchUserData,
+          ),
+        ],
       ),
-      body: userData == null
+      body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
                 color: UberColors.primary,
@@ -304,17 +510,12 @@ class _FriendsPageState extends State<FriendsPage>
                   ),
                 ),
                 SafeArea(
-                    // Content
                     child: SingleChildScrollView(
-                  // Wrap the entire content here
                   physics: const BouncingScrollPhysics(),
                   child: Padding(
-                    padding: const EdgeInsets.only(
-                        bottom: 32.0), // optional bottom padding
+                    padding: const EdgeInsets.only(bottom: 32.0),
                     child: Column(
                       children: [
-                        // Header with title and back button
-
                         // Toggle buttons
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -389,8 +590,7 @@ class _FriendsPageState extends State<FriendsPage>
                                               ),
                                             ),
                                           ),
-                                          if ((userData?['requestsList'] ?? [])
-                                              .isNotEmpty)
+                                          if (_requestsList.isNotEmpty)
                                             Positioned(
                                               right: 20,
                                               top: 15,
@@ -417,22 +617,30 @@ class _FriendsPageState extends State<FriendsPage>
 
                         // Friends list or Requests list
                         _showRequests
-                            ? buildFriendRequests(userData!)
-                            : buildFriendsList(userData!),
+                            ? buildFriendRequests()
+                            : buildFriendsList(),
                       ],
                     ),
                   ),
                 ))
               ],
             ),
+      // FAB to add friends
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddFriendPage()),
+          ).then((_) => fetchUserData());
+        },
+        backgroundColor: UberColors.primary,
+        child: const Icon(Icons.person_add_rounded),
+      ),
     );
   }
 
-  Widget buildFriendsList(Map<String, dynamic> userData) {
-    final List<Map<String, dynamic>> friendsList =
-        List<Map<String, dynamic>>.from(userData['friendsList'] ?? []);
-
-    if (friendsList.isEmpty) {
+  Widget buildFriendsList() {
+    if (_friendsList.isEmpty) {
       return SizedBox(
         height: 200,
         child: Center(
@@ -464,11 +672,10 @@ class _FriendsPageState extends State<FriendsPage>
               const SizedBox(height: 24),
               GestureDetector(
                 onTap: () {
-                  print('Navigate to friends page');
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => AddFriendPage()),
-                  );
+                  ).then((_) => fetchUserData());
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -504,39 +711,47 @@ class _FriendsPageState extends State<FriendsPage>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${friendsList.length} Friends',
+                '${_friendsList.length} Friends',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: UberColors.textPrimary,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: UberColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.person_add_outlined,
-                      color: UberColors.primary,
-                      size: 16,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Add Friend',
-                      style: TextStyle(
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddFriendPage()),
+                  ).then((_) => fetchUserData());
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: UberColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.person_add_outlined,
                         color: UberColors.primary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 13,
+                        size: 16,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 6),
+                      Text(
+                        'Add Friend',
+                        style: TextStyle(
+                          color: UberColors.primary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -545,9 +760,9 @@ class _FriendsPageState extends State<FriendsPage>
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: friendsList.length,
+            itemCount: _friendsList.length,
             itemBuilder: (context, index) {
-              final friend = friendsList[index];
+              final friend = _friendsList[index];
               return Container(
                 margin: const EdgeInsets.only(bottom: 12.0),
                 padding: const EdgeInsets.all(14),
@@ -612,17 +827,40 @@ class _FriendsPageState extends State<FriendsPage>
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: UberColors.primary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.message_outlined,
-                        color: UberColors.primary,
-                        size: 18,
-                      ),
+                    // Action buttons
+                    Row(
+                      children: [
+                        // Message button
+                        Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: UberColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.message_outlined,
+                            color: UberColors.primary,
+                            size: 18,
+                          ),
+                        ),
+                        // Remove friend button
+                        GestureDetector(
+                          onTap: () => _showRemoveFriendDialog(friend),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.person_remove_outlined,
+                              color: Colors.red,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -634,11 +872,55 @@ class _FriendsPageState extends State<FriendsPage>
     );
   }
 
-  Widget buildFriendRequests(Map<String, dynamic> userData) {
-    final List<Map<String, dynamic>> requestsList =
-        List<Map<String, dynamic>>.from(userData['requestsList'] ?? []);
+  Future<void> _showRemoveFriendDialog(Map<String, dynamic> friend) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: UberColors.cardBg,
+          title: Text(
+            'Remove Friend',
+            style: TextStyle(color: UberColors.textPrimary),
+          ),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                  'Are you sure you want to remove ${friend['name']} from your friends list?',
+                  style: TextStyle(color: UberColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: UberColors.textSecondary),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Remove',
+                style: TextStyle(color: Colors.red),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                removeFriend(friend['uid']);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-    if (requestsList.isEmpty) {
+  Widget buildFriendRequests() {
+    if (_requestsList.isEmpty) {
       return const SizedBox(
         height: 200,
         child: Center(
@@ -679,7 +961,7 @@ class _FriendsPageState extends State<FriendsPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${requestsList.length} Friend Requests',
+            '${_requestsList.length} Friend ${_requestsList.length == 1 ? 'Request' : 'Requests'}',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -690,9 +972,9 @@ class _FriendsPageState extends State<FriendsPage>
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: requestsList.length,
+            itemCount: _requestsList.length,
             itemBuilder: (context, index) {
-              final request = requestsList[index];
+              final request = _requestsList[index];
               return Container(
                 margin: const EdgeInsets.only(bottom: 12.0),
                 padding: const EdgeInsets.all(14),

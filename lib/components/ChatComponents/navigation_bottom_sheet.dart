@@ -39,7 +39,13 @@ class NewChatBottomSheetState extends State<NewChatBottomSheet> {
       return;
     }
 
-    final results = await widget.chatService.searchUsers(query);
+    // Add @ symbol if not already present
+    String searchQuery = query;
+    if (!query.startsWith('@')) {
+      searchQuery = '@' + query;
+    }
+
+    final results = await widget.chatService.searchUsers(searchQuery);
     setState(() {
       _searchResults = results;
     });
@@ -224,6 +230,15 @@ class NewChatBottomSheetState extends State<NewChatBottomSheet> {
                             user['displayName'].length > 10
                                 ? '${user['displayName'].substring(0, 8)}...'
                                 : user['displayName'],
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            user['userName'].length > 10
+                                ? '${user['userName'].substring(0, 8)}...'
+                                : user['userName'],
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.white,
