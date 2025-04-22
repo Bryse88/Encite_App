@@ -427,57 +427,67 @@ class _HomePageState extends State<HomePage>
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
           physics: const BouncingScrollPhysics(),
-          child: isWideScreen
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Left Column
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const LocationWidget(),
-                          const SizedBox(height: 24),
-                          _buildCalendarWidget(),
-                          const SizedBox(height: 24),
-                          _buildAddGroupWidget(),
-                          const SizedBox(height: 24),
-                          _buildAddFriendWidget(),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 24),
+          child: Column(
+            children: [
+              // Your existing content
+              isWideScreen
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left Column
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const LocationWidget(),
+                              const SizedBox(height: 24),
+                              _buildCalendarWidget(),
+                              const SizedBox(height: 24),
+                              _buildAddGroupWidget(),
+                              const SizedBox(height: 24),
+                              _buildAddFriendWidget(),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
 
-                    // Right Column
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildAvailableFriendsWidget(),
-                          const SizedBox(height: 24),
-                          _buildUpcomingEventsWidget(),
-                        ],
-                      ),
+                        // Right Column
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildAvailableFriendsWidget(),
+                              const SizedBox(height: 24),
+                              _buildUpcomingEventsWidget(),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        _buildAddSingleWidget(),
+                        const SizedBox(height: 24),
+                        _buildAddGroupWidget(),
+                        const SizedBox(height: 24),
+                        _buildAvailableFriendsWidget(),
+                        const SizedBox(height: 24),
+                        _buildCalendarWidget(),
+                        const SizedBox(height: 24),
+                        _buildUpcomingEventsWidget(),
+                      ],
                     ),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildAddSingleWidget(),
-                    const SizedBox(height: 24),
-                    _buildAddGroupWidget(),
-                    const SizedBox(height: 24),
-                    _buildAvailableFriendsWidget(),
-                    const SizedBox(height: 24),
-                    _buildCalendarWidget(),
-                    const SizedBox(height: 24),
-                    _buildUpcomingEventsWidget(),
-                  ],
-                ),
+
+              // Add an adaptive bottom padding that uses percentage of screen height
+              SizedBox(
+                  height: MediaQuery.of(context).size.height *
+                      0.1), // 10% of screen height
+            ],
+          ),
         );
       },
     );

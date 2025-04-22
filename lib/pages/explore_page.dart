@@ -154,154 +154,156 @@ class _ExplorePageState extends State<ExplorePage>
             color: UberColors.primary,
             backgroundColor: UberColors.cardBg,
             child: SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom +
-                      screenHeight * 0.1,
-                ),
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    // App bar
-                    const SliverAppBar(
-                      backgroundColor: Colors.transparent,
-                      expandedHeight: 60,
-                      floating: true,
-                      pinned: false,
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Explore',
-                            style: TextStyle(
-                              color: UberColors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 24,
-                              letterSpacing: -0.5,
-                            ),
+              child:
+                  //Padding(
+                  // padding: EdgeInsets.only(
+                  //   bottom: MediaQuery.of(context).padding.bottom +
+                  //       screenHeight * 0.1,
+                  // ),
+                  //child:
+                  CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // App bar
+                  const SliverAppBar(
+                    backgroundColor: Colors.transparent,
+                    expandedHeight: 60,
+                    floating: true,
+                    pinned: false,
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Explore',
+                          style: TextStyle(
+                            color: UberColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 24,
+                            letterSpacing: -0.5,
                           ),
-                          // Container(
-                          //   decoration: BoxDecoration(
-                          //     color: UberColors.cardBg,
-                          //     borderRadius: BorderRadius.circular(12),
-                          //   ),
-                          //   child: IconButton(
-                          //     icon: const Icon(
-                          //       Icons.search_rounded,
-                          //       color: UberColors.textPrimary,
-                          //       size: 22,
-                          //     ),
-                          //     onPressed: () {
-                          //       // Search functionality
-                          //     },
-                          //   ),
-                          // ),
-                        ],
-                      ),
+                        ),
+                        // Container(
+                        //   decoration: BoxDecoration(
+                        //     color: UberColors.cardBg,
+                        //     borderRadius: BorderRadius.circular(12),
+                        //   ),
+                        //   child: IconButton(
+                        //     icon: const Icon(
+                        //       Icons.search_rounded,
+                        //       color: UberColors.textPrimary,
+                        //       size: 22,
+                        //     ),
+                        //     onPressed: () {
+                        //       // Search functionality
+                        //     },
+                        //   ),
+                        // ),
+                      ],
                     ),
+                  ),
 
-                    // Content
-                    SliverToBoxAdapter(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Location indicator
-                          const Padding(
-                            padding: EdgeInsets.fromLTRB(20, 0, 20, 24),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  color: UberColors.primary,
-                                  size: 18,
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Madison, WI',
-                                  style: TextStyle(
-                                    color: UberColors.textSecondary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                SizedBox(width: 4),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
+                  // Content
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Location indicator
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(20, 0, 20, 24),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                color: UberColors.primary,
+                                size: 18,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Madison, WI',
+                                style: TextStyle(
                                   color: UberColors.textSecondary,
-                                  size: 16,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                              ],
-                            ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: UberColors.textSecondary,
+                                size: 16,
+                              ),
+                            ],
                           ),
+                        ),
 
-                          // Featured banner
-                          SizedBox(
-                              height: screenHeight * 0.25,
-                              child: Gallery(key: galleryKey)),
+                        // Featured banner
+                        SizedBox(
+                            height: screenHeight * 0.25,
+                            child: Gallery(key: galleryKey)),
 
-                          const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                          // Drink Specials Section
-                          Heading(
-                            text: "Drink Specials",
-                            color: UberColors.textPrimary,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AllSpecialsPage(
-                                    title: "Drink Specials",
-                                    items: drinkSpecials,
-                                  ),
+                        // Drink Specials Section
+                        Heading(
+                          text: "Drink Specials",
+                          color: UberColors.textPrimary,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AllSpecialsPage(
+                                  title: "Drink Specials",
+                                  items: drinkSpecials,
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
+                        ),
 
-                          const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                          // Drink Specials List
-                          SpecialsList(
-                            key: allDrinkSpecialtyListKey,
-                            items: drinkSpecials,
-                          ),
+                        // Drink Specials List
+                        SpecialsList(
+                          key: allDrinkSpecialtyListKey,
+                          items: drinkSpecials,
+                        ),
 
-                          const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-                          // Food Specials Section
-                          Heading(
-                            text: "Food Specials",
-                            color: UberColors.textPrimary,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AllSpecialsPage(
-                                    title: "Food Specials",
-                                    items: foodSpecials,
-                                  ),
+                        // Food Specials Section
+                        Heading(
+                          text: "Food Specials",
+                          color: UberColors.textPrimary,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AllSpecialsPage(
+                                  title: "Food Specials",
+                                  items: foodSpecials,
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
+                        ),
 
-                          const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                          // Food Specials List
-                          SpecialsList(
-                            key: allFoodSpecialtyListKey,
-                            items: foodSpecials,
-                          ),
-
-                          const SizedBox(height: 30),
-                        ],
-                      ),
+                        // Food Specials List
+                        SpecialsList(
+                          key: allFoodSpecialtyListKey,
+                          items: foodSpecials,
+                        ),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.08),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
+          //),
         ],
       ),
     );
