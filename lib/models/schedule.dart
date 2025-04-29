@@ -1,73 +1,47 @@
-import 'package:encite/models/activity.dart';
-import 'package:encite/pages/scheduler.dart';
 import 'package:intl/intl.dart';
+import 'activity.dart';
 
 class Schedule {
   final String id;
-  final DateTime createdAt;
   final List<Activity> activities;
-
-  final DateTime? userStartTime;
-  final DateTime? userEndTime;
+  final String createdAt;
 
   Schedule({
     required this.id,
-    required this.createdAt,
     required this.activities,
-    this.userStartTime,
-    this.userEndTime,
+    required this.createdAt,
   });
 
-  double get totalCost => activities.fold(0.0, (sum, a) => sum + a.price);
+  // Display the time frame from the first to the last activity
+  String get localTimeFrame {
+    if (activities.isEmpty) return 'No time frame';
 
-  DateTime get startTime => activities.isNotEmpty
-      ? activities
-          .map((a) => a.startTime)
-          .reduce((a, b) => a.isBefore(b) ? a : b)
-      : DateTime.now();
-
-  DateTime get endTime => activities.isNotEmpty
-      ? activities.map((a) => a.endTime).reduce((a, b) => a.isAfter(b) ? a : b)
-      : DateTime.now();
-
-  String get timeFrame {
-    final start = userStartTime ?? startTime;
-    final end = userEndTime ?? endTime;
-    return '${_format(start)} – ${_format(end)}';
+    final formatter = DateFormat('h:mm a');
+    return '${formatter.format(activities.first.startTime)} - ${formatter.format(activities.last.endTime)}';
   }
 
-  String _format(DateTime dt) => DateFormat.jm().format(dt.toLocal());
+  // Total cost of all activities
+  double get totalCost {
+    return activities.fold(0.0, (sum, activity) => sum + activity.price);
+  }
+
+  factory Schedule.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> activityData = json['activities'] ?? [];
+    final List<Activity> activities =
+        activityData.map((data) => Activity.fromJson(data)).toList();
+
+    return Schedule(
+      id: json['id'] ?? '',
+      activities: activities,
+      createdAt: json['createdAt'] ?? DateTime.now().toIso8601String(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'activities': activities.map((a) => a.toJson()).toList(),
+      'createdAt': createdAt,
+    };
+  }
 }
-
-// class Schedule {
-//   final String id;
-//   final DateTime createdAt;
-//   final List<Activity> activities;
-
-//   final DateTime? userStartTime; // ⬅️ NEW
-//   final DateTime? userEndTime;   // ⬅️ NEW
-
-//   Schedule({
-//     required this.id,
-//     required this.createdAt,
-//     required this.activities,
-//     this.userStartTime,
-//     this.userEndTime,
-//   });
-
-//   double get totalCost => activities.fold(0.0, (sum, a) => sum + a.price);
-
-//   DateTime get startTime => activities.isNotEmpty
-//       ? activities
-//           .map((a) => a.startTime)
-//           .reduce((a, b) => a.isBefore(b) ? a : b)
-//       : DateTime.now();
-
-//   DateTime get endTime => activities.isNotEmpty
-//       ? activities.map((a) => a.endTime).reduce((a, b) => a.isAfter(b) ? a : b)
-//       : DateTime.now();
-
-//   String get timeFrame => '${_format(startTime)} – ${_format(endTime)}';
-
-//   String _format(DateTime dt) => DateFormat.jm().format(dt);
-// }

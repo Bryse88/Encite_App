@@ -1,65 +1,34 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:encite/models/schedule.dart';
-import 'package:encite/models/activity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:encite/models/activity.dart';
+import 'package:encite/models/schedule.dart';
 
 class ScheduleService {
-  static const String apiUrl =
+  final String apiUrl =
       'https://encite-mvp-backend.onrender.com/generate_schedule';
 
-  // Generate a new schedule using the backend API
-  Future<Schedule?> generateSchedule(Map<String, dynamic> userData) async {
+  Future<Schedule?> generateSchedule(Map<String, dynamic> payload) async {
     try {
-      print('Generating schedule with data: ${jsonEncode(userData)}');
+      print('Sending request to: $apiUrl');
+      print('Payload: ${json.encode(payload)}');
 
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(userData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
       );
 
       if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
+        final Map<String, dynamic> data = json.decode(response.body);
         print('Received schedule response: ${response.body}');
-
-        if (decoded['activities'] == null ||
-            (decoded['activities'] as List).isEmpty) {
-          print('Response contained no activities');
-          return null;
-        }
-
-        // Extract original user-selected times from the input
-        final userStartTime = DateTime.parse(userData['startTime']).toLocal();
-        final userEndTime = DateTime.parse(userData['endTime']).toLocal();
-
-        return Schedule(
-          id: decoded['id'] ?? 'schedule_${const Uuid().v4().substring(0, 8)}',
-          createdAt: DateTime.parse(decoded['createdAt']),
-          activities: (decoded['activities'] as List).map((activityJson) {
-            String? explanation = activityJson['explanation'];
-            if (explanation != null && explanation.isNotEmpty) {
-              _saveActivityExplanation(activityJson['id'], explanation);
-            }
-
-            return Activity(
-              id: activityJson['id'],
-              title: activityJson['title'],
-              description: activityJson['description'],
-              startTime: DateTime.parse(activityJson['startTime']),
-              endTime: DateTime.parse(activityJson['endTime']),
-              price: (activityJson['price'] as num).toDouble(),
-              imageUrl: activityJson['imageUrl'],
-            );
-          }).toList(),
-          userStartTime: userStartTime,
-          userEndTime: userEndTime,
-        );
+        return Schedule.fromJson(data);
       } else {
-        print('Server error: ${response.statusCode}');
-        print('Response body: ${response.body}');
+        print('Error: HTTP status ${response.statusCode}');
+        print('Response: ${response.body}');
         return null;
       }
     } catch (e) {
@@ -68,214 +37,190 @@ class ScheduleService {
     }
   }
 
-  Future<void> _saveActivityExplanation(
-      String activityId, String explanation) async {
+  Future<Activity?> requestSubstituteActivity(
+      String activityId, Schedule schedule) async {
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid != null) {
-        await FirebaseFirestore.instance
-            .collection('activity_explanations')
-            .doc(activityId)
-            .set({
-          'activityId': activityId,
-          'explanation': explanation,
-          'userId': uid,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return null;
+
+      final activityToReplace = schedule.activities.firstWhere(
+        (activity) => activity.id == activityId,
+        orElse: () => throw Exception('Activity not found'),
+      );
+
+      final prefDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('onboarding')
+          .doc('main')
+          .get();
+
+      final prefs = prefDoc.data() ?? {};
+
+      final payload = {
+        "replace_activity": activityToReplace.toJson(),
+        "existing_activities": schedule.activities
+            .where((a) => a.id != activityId)
+            .map((a) => a.toJson())
+            .toList(),
+        "location": prefs['location'] ?? "Madison, WI",
+        "experience_vibes": prefs['experience_vibes'] ?? ["Social & Outgoing"],
+        "activities": prefs['activities'] ?? ["Try new restaurants / cafes"],
+        "dietary_preference": prefs['dietary_preference'] ?? "No Preference",
+        "travel_willingness":
+            prefs['travel_willingness'] ?? "Walking Distance (< 15 min)",
+        "transportation_modes": prefs['transportation_modes'] ?? ["Walking"],
+        "budget": prefs['budget'] ?? 100.0,
+        "location_priorities": {
+          "Ambience & Atmosphere": prefs['ambience_priority'] ?? 3,
+          "Cost / Budget": prefs['budget_priority'] ?? 2,
+          "Distance / Travel Time": prefs['distance_priority'] ?? 3,
+          "Food & Drink Quality": prefs['food_quality_priority'] ?? 4,
+          "Reviews & Popularity": prefs['popularity_priority'] ?? 2,
+          "Unique or Specialty Offerings": prefs['uniqueness_priority'] ?? 6
+        }
+      };
+
+      print('Substitute payload: ${json.encode(payload)}');
+
+      final response = await http.post(
+        Uri.parse('$apiUrl/substitute'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Substitute response: ${response.body}');
+
+        if (data != null && data.containsKey('activity')) {
+          return Activity.fromJson(data['activity']);
+        }
+        return null;
+      } else {
+        print('Error substituting activity: ${response.statusCode}');
+        print('Response: ${response.body}');
+        return null;
       }
     } catch (e) {
-      print('Error saving explanation: $e');
+      print('Error substituting activity: $e');
+      return null;
+    }
+  }
+
+  Future<void> saveSchedule(Schedule schedule) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('User not logged in');
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('schedules')
+          .doc(schedule.id)
+          .set({
+        'id': schedule.id,
+        'createdAt':
+            DateTime.parse(schedule.createdAt).toUtc().toIso8601String(),
+        'activities': schedule.activities.map((a) => a.toJson()).toList(),
+      });
+    } catch (e) {
+      print('Error saving schedule: $e');
+      throw e;
     }
   }
 
   Future<String?> getActivityExplanation(String activityId) async {
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('activity_explanations')
-          .doc(activityId)
-          .get();
-
-      if (doc.exists) {
-        return doc.data()?['explanation'];
-      }
-      return null;
-    } catch (e) {
-      print('Error getting explanation: $e');
-      return null;
-    }
-  }
-
-  Future<Activity?> requestSubstituteActivity(
-      String activityId, Schedule schedule) async {
-    try {
-      final activityToReplace = schedule.activities.firstWhere(
-        (a) => a.id == activityId,
-        orElse: () => schedule.activities.first,
-      );
-
-      final substitutionRequest = {
-        'replace_activity': {
-          'id': activityToReplace.id,
-          'start_time': activityToReplace.startTime.toIso8601String(),
-          'end_time': activityToReplace.endTime.toIso8601String(),
-        },
-        'existing_activities': schedule.activities
-            .where((a) => a.id != activityId)
-            .map((a) => {
-                  'id': a.id,
-                  'title': a.title,
-                  'startTime': a.startTime.toIso8601String(),
-                  'endTime': a.endTime.toIso8601String(),
-                })
-            .toList(),
-      };
-
-      final response = await http.post(
-        Uri.parse('$apiUrl/substitute'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(substitutionRequest),
-      );
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        final activityJson = decoded['activity'];
-
-        if (activityJson != null) {
-          String? explanation = activityJson['explanation'];
-          if (explanation != null && explanation.isNotEmpty) {
-            _saveActivityExplanation(activityJson['id'], explanation);
-          }
-
-          return Activity(
-            id: activityJson['id'] ??
-                'activity_${const Uuid().v4().substring(0, 8)}',
-            title: activityJson['title'],
-            description: activityJson['description'],
-            startTime: DateTime.parse(activityJson['startTime']),
-            endTime: DateTime.parse(activityJson['endTime']),
-            price: (activityJson['price'] as num).toDouble(),
-            imageUrl: activityJson['imageUrl'],
-          );
-        }
-      }
-
-      return _generateMockSubstitute(activityId, schedule);
-    } catch (e) {
-      print('Error requesting substitute: $e');
-      return _generateMockSubstitute(activityId, schedule);
-    }
-  }
-
-  Activity _generateMockSubstitute(String activityId, Schedule schedule) {
-    final originalActivity = schedule.activities.firstWhere(
-      (a) => a.id == activityId,
-      orElse: () => schedule.activities.first,
-    );
-
-    final alternativeTitles = [
-      'Alternative ${originalActivity.title.split(' ').last}',
-      'Different ${originalActivity.title.split(' ').last}',
-      'New ${originalActivity.title.split(' ').last} Experience',
-      'Exciting ${originalActivity.title.split(' ').last}',
-    ];
-
-    final title = alternativeTitles[
-        DateTime.now().millisecond % alternativeTitles.length];
-    final newId = 'substitute_${const Uuid().v4().substring(0, 8)}';
-
-    _saveActivityExplanation(newId,
-        'AI-suggested alternative that fits within your schedule timeframe.');
-
-    return Activity(
-      id: newId,
-      title: title,
-      description:
-          'This is an alternative activity suggested by our AI based on your preferences.',
-      startTime: originalActivity.startTime,
-      endTime: originalActivity.endTime,
-      price: originalActivity.price * 0.9,
-      imageUrl:
-          'https://picsum.photos/200?random=${DateTime.now().millisecondsSinceEpoch}',
-    );
-  }
-
-  Future<void> saveSchedule(Schedule schedule) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      throw Exception('User not authenticated');
-    }
-
-    final schedulesRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('schedules')
-        .doc(schedule.id);
-
-    await schedulesRef.set({
-      'id': schedule.id,
-      'createdAt': schedule.createdAt.toIso8601String(),
-      'totalCost': schedule.totalCost,
-      'startTime': schedule.startTime.toIso8601String(),
-      'endTime': schedule.endTime.toIso8601String(),
-      'userStartTime': schedule.userStartTime?.toIso8601String(),
-      'userEndTime': schedule.userEndTime?.toIso8601String(),
-      'activities': schedule.activities
-          .map((a) => {
-                'id': a.id,
-                'title': a.title,
-                'description': a.description,
-                'startTime': a.startTime.toIso8601String(),
-                'endTime': a.endTime.toIso8601String(),
-                'price': a.price,
-                'imageUrl': a.imageUrl,
-              })
-          .toList(),
-    });
-
-    print('Schedule saved to Firestore: ${schedule.id}');
+    return null;
   }
 
   Future<List<Schedule>> getUserSchedules() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      return [];
-    }
-
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return [];
+
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
-          .doc(uid)
+          .doc(user.uid)
           .collection('schedules')
           .orderBy('createdAt', descending: true)
           .get();
 
-      return snapshot.docs.map((doc) {
+      final schedules = snapshot.docs.map((doc) {
         final data = doc.data();
-        return Schedule(
-          id: data['id'],
-          createdAt: DateTime.parse(data['createdAt']),
-          activities: (data['activities'] as List).map((activityData) {
+
+        List<Activity> activities = [];
+        if (data['activities'] != null && data['activities'] is List) {
+          activities = (data['activities'] as List).map((activityData) {
             return Activity(
-              id: activityData['id'],
-              title: activityData['title'],
-              description: activityData['description'],
-              startTime: DateTime.parse(activityData['startTime']),
-              endTime: DateTime.parse(activityData['endTime']),
-              price: (activityData['price'] as num).toDouble(),
-              imageUrl: activityData['imageUrl'],
+              id: activityData['id'] ?? '',
+              title: activityData['title'] ?? '',
+              description: activityData['description'] ?? '',
+              startTime: _normalizeTime(activityData['startTime']),
+              endTime: _normalizeTime(activityData['endTime']),
+              price: _parsePrice(activityData['price']),
+              imageUrl: activityData['imageUrl'] ?? '',
+              explanation: activityData['explanation'] ?? '',
             );
-          }).toList(),
-          userStartTime: data['userStartTime'] != null
-              ? DateTime.parse(data['userStartTime']).toLocal()
-              : null,
-          userEndTime: data['userEndTime'] != null
-              ? DateTime.parse(data['userEndTime']).toLocal()
-              : null,
-        );
+          }).toList();
+        }
+
+        return Schedule(
+            id: data['id'] ?? doc.id,
+            activities: activities,
+            createdAt: data['createdAt']);
       }).toList();
+
+      return schedules;
     } catch (e) {
-      print('Error getting user schedules: $e');
+      print('Error in getUserSchedules: $e');
       return [];
     }
+  }
+
+  DateTime _normalizeTime(dynamic timeValue) {
+    if (timeValue == null) return DateTime.now();
+    if (timeValue is DateTime) return timeValue.toLocal();
+    if (timeValue is String) {
+      try {
+        return DateTime.parse(timeValue).toLocal();
+      } catch (_) {
+        return DateTime.now();
+      }
+    }
+    if (timeValue is Timestamp) {
+      return timeValue.toDate().toLocal();
+    }
+    if (timeValue is Map && timeValue.containsKey('seconds')) {
+      final seconds = timeValue['seconds'] as int;
+      final nanoseconds = timeValue['nanoseconds'] as int? ?? 0;
+      return DateTime.fromMillisecondsSinceEpoch(
+        seconds * 1000 + (nanoseconds ~/ 1000000),
+      ).toLocal();
+    }
+    return DateTime.now();
+  }
+
+  double _parsePrice(dynamic priceValue) {
+    if (priceValue == null) return 0.0;
+    if (priceValue is int) return priceValue.toDouble();
+    if (priceValue is double) return priceValue;
+    if (priceValue is String) {
+      try {
+        return double.parse(priceValue);
+      } catch (_) {
+        final numericString = priceValue.replaceAll(RegExp(r'[^\d.]'), '');
+        if (numericString.isNotEmpty) {
+          try {
+            return double.parse(numericString);
+          } catch (_) {
+            return 0.0;
+          }
+        }
+      }
+    }
+    return 0.0;
   }
 }

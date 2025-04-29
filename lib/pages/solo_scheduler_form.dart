@@ -10,6 +10,7 @@ import 'package:encite/services/schedule_service.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert'; // Import for JSON encoding
 
 class SoloSchedulerForm extends StatefulWidget {
   const SoloSchedulerForm({Key? key}) : super(key: key);
@@ -26,7 +27,7 @@ class _SchedulerFormState extends State<SoloSchedulerForm>
 
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
-  double _budget = 0.0;
+  double _budget = 100.0; // Default budget
   String _location = '';
   bool _useCurrentLocation = false;
   final List<String> _selectedTransportModes = [];
@@ -125,6 +126,22 @@ class _SchedulerFormState extends State<SoloSchedulerForm>
     final end = DateTime(now.year, now.month, now.day, _endTime?.hour ?? 18,
         _endTime?.minute ?? 0);
 
+    // Determine travel willingness based on selected transportation modes
+    String travelWillingness;
+    if (_selectedTransportModes.contains("Walking") &&
+        _selectedTransportModes.length == 1) {
+      travelWillingness = "Walking Distance (< 15 min)";
+    } else if (_selectedTransportModes.contains("Rideshare")) {
+      travelWillingness = "Rideshare Available";
+    } else if (_selectedTransportModes.contains("Personal Vehicle")) {
+      travelWillingness = "Has Personal Vehicle";
+    } else if (_selectedTransportModes.contains("Public Transportation")) {
+      travelWillingness = "Public Transit Available";
+    } else {
+      // Default if no transportation modes are selected
+      travelWillingness = "Walking Distance (< 15 min)";
+    }
+
     // Map user preferences to API format
     final schedulePayload = {
       "location": locationName,
@@ -134,9 +151,11 @@ class _SchedulerFormState extends State<SoloSchedulerForm>
       "experience_vibes": prefs['experience_vibes'] ?? ["Social & Outgoing"],
       "activities": prefs['activities'] ?? ["Try new restaurants / cafes"],
       "dietary_preference": prefs['dietary_preference'] ?? "No Preference",
-      "travel_willingness": _selectedTransportModes.contains("Walking")
-          ? "Walking Distance (< 15 min)"
-          : "Short drive (15-30 min)",
+      "travel_willingness": travelWillingness,
+      "transportation_modes": _selectedTransportModes.isEmpty
+          ? ["Walking"]
+          : _selectedTransportModes,
+      "budget": _budget, // Include budget in the payload
       "location_priorities": {
         "Ambience & Atmosphere": prefs['ambience_priority'] ?? 3,
         "Cost / Budget":
@@ -148,10 +167,12 @@ class _SchedulerFormState extends State<SoloSchedulerForm>
       },
       "schedule_density": prefs['schedule_density'] ?? 4
     };
+
     print('Local start: $start');
     print('Local end: $end');
     print('UTC start: ${start.toUtc()}');
     print('UTC end: ${end.toUtc()}');
+    print('Generating schedule with data: ${json.encode(schedulePayload)}');
 
     // Send to backend API
     final schedule = await ScheduleService().generateSchedule(schedulePayload);
@@ -159,6 +180,10 @@ class _SchedulerFormState extends State<SoloSchedulerForm>
     setState(() {
       _isLoading = false;
     });
+
+    if (schedule != null) {
+      print('Received schedule response: ${json.encode(schedule)}');
+    }
 
     if (!mounted) return;
 

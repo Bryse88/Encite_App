@@ -340,7 +340,7 @@ class Gallery extends StatelessWidget {
             //   fit: BoxFit.cover,
             // ),
             child: Image.asset(
-              'lib/img/WASB_WEEK.png',
+              'lib/img/chazen.jpg',
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
@@ -393,7 +393,7 @@ class Gallery extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'WASB All Campus Party Week',
+                    'Student Night at the Chazen',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -411,7 +411,7 @@ class Gallery extends StatelessWidget {
                       ),
                       SizedBox(width: 6),
                       Text(
-                        'Apr 21 - Apr 25',
+                        'May 2',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 14,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:encite/models/activity.dart';
-import 'package:encite/services/schedule_service.dart';
 
 class ActivityCard extends StatefulWidget {
   final Activity activity;
@@ -22,38 +21,6 @@ class ActivityCard extends StatefulWidget {
 
 class _ActivityCardState extends State<ActivityCard> {
   bool _isExpanded = false;
-  String? _explanation;
-  bool _isLoadingExplanation = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadExplanation();
-  }
-
-  Future<void> _loadExplanation() async {
-    setState(() {
-      _isLoadingExplanation = true;
-    });
-
-    try {
-      final explanation =
-          await ScheduleService().getActivityExplanation(widget.activity.id);
-
-      if (mounted) {
-        setState(() {
-          _explanation = explanation;
-          _isLoadingExplanation = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingExplanation = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +61,7 @@ class _ActivityCardState extends State<ActivityCard> {
                       color: Colors.grey[300],
                       child: Center(
                         child: Image.network(
-                          // Generate a consistent fallback image based on the activity title
+                          // Fallback image
                           'https://firebasestorage.googleapis.com/v0/b/project888-29925.firebasestorage.app/o/ChatGPT%20Image%20Apr%2017%2C%202025%2C%2007_27_13%20AM.png?alt=media&token=7ec0218c-d97c-468b-a141-07d403bc5ee4',
                           height: 150,
                           width: double.infinity,
@@ -104,10 +71,6 @@ class _ActivityCardState extends State<ActivityCard> {
                         ),
                       ),
                     ),
-                    cacheKey: widget.activity.id +
-                        '_image', // Use activity ID for cache key
-                    maxHeightDiskCache: 300, // Limit cache size
-                    memCacheHeight: 600, // For high-res displays
                   ),
                 ),
                 // Price badge
@@ -168,8 +131,15 @@ class _ActivityCardState extends State<ActivityCard> {
                           color: theme.colorScheme.primary.withOpacity(0.8)),
                       const SizedBox(width: 4),
                       Text(
-                        '${timeFormat.format(widget.activity.startTime)} - ${timeFormat.format(widget.activity.endTime)}',
+                        '${widget.activity.formattedStartTime} - ${widget.activity.formattedEndTime}',
                         style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '(${widget.activity.formattedDuration})',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),
@@ -212,8 +182,7 @@ class _ActivityCardState extends State<ActivityCard> {
                           ),
 
                           // Show explanation if available
-                          if (_explanation != null &&
-                              _explanation!.isNotEmpty) ...[
+                          if (widget.activity.explanation.isNotEmpty) ...[
                             const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.all(8),
@@ -233,7 +202,7 @@ class _ActivityCardState extends State<ActivityCard> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      _explanation!,
+                                      widget.activity.explanation,
                                       style:
                                           theme.textTheme.bodySmall?.copyWith(
                                         fontStyle: FontStyle.italic,
@@ -241,18 +210,6 @@ class _ActivityCardState extends State<ActivityCard> {
                                     ),
                                   ),
                                 ],
-                              ),
-                            ),
-                          ] else if (_isLoadingExplanation) ...[
-                            const SizedBox(height: 12),
-                            Center(
-                              child: SizedBox(
-                                height: 16,
-                                width: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: theme.colorScheme.primary,
-                                ),
                               ),
                             ),
                           ],

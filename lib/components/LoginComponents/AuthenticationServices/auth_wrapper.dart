@@ -2,7 +2,6 @@ import 'package:encite/components/LoginComponents/AuthenticationServices/auth_se
 import 'package:encite/pages/app_navigator.dart';
 import 'package:encite/pages/group_page.dart';
 import 'package:encite/pages/home_page.dart';
-import 'package:encite/pages/scheduler.dart';
 import 'package:encite/pages/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';

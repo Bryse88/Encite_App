@@ -272,6 +272,7 @@ class _SchedulePresentationPageState extends State<SchedulePresentationPage> {
                                     ],
                                   ),
                                   const Spacer(),
+                                  // Replace the existing time frame display with:
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
@@ -291,7 +292,8 @@ class _SchedulePresentationPageState extends State<SchedulePresentationPage> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          _schedule.timeFrame,
+                                          _schedule
+                                              .localTimeFrame, // Use local time frame here
                                           style: theme.textTheme.bodyLarge
                                               ?.copyWith(
                                             fontWeight: FontWeight.bold,

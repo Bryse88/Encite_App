@@ -287,19 +287,46 @@ class _CreateGroupPageState extends State<CreateGroupPage>
           const SizedBox(height: 32),
           TextField(
             controller: _groupNameController,
-            decoration: InputDecoration(
+            // focusNode: _focusNode,
+            decoration: const InputDecoration(
               labelText: 'Group Name',
+              labelStyle: TextStyle(
+                color: Colors.white70,
+              ),
               hintText: 'Enter a name for your group',
+              hintStyle: TextStyle(
+                color: Colors.white38,
+              ),
+              prefixIcon: Icon(
+                Icons.group,
+                color: Colors.white70,
+              ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.white54),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.white54),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
               ),
               filled: true,
-              fillColor: Colors.grey[50],
-              prefixIcon: const Icon(Icons.group),
+              fillColor: Colors.transparent,
+              helperText: "Tap anywhere to dismiss keyboard",
+              helperStyle: TextStyle(
+                color: Colors.white54,
+              ),
             ),
-            style: const TextStyle(fontSize: 18, color: Colors.black),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+            ),
             textCapitalization: TextCapitalization.words,
             autofocus: true,
+            onEditingComplete: () {
+              // Dismiss keyboard when user presses the "Done" button
+              FocusScope.of(context).unfocus();
+            },
           ),
           const SizedBox(height: 16),
           // Example group names for inspiration

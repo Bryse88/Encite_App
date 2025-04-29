@@ -130,23 +130,28 @@ class _HomePageState extends State<HomePage>
 
   void _insertSchedulesToEvents(List<Schedule> schedules) {
     // Sort schedules by start time (most recent first)
-    schedules.sort((a, b) => a.startTime.compareTo(b.startTime));
+    schedules.sort((a, b) {
+      if (a.activities.isEmpty || b.activities.isEmpty) {
+        return 0; // Handle empty schedules
+      }
+      return a.activities.first.startTime
+          .compareTo(b.activities.first.startTime);
+    });
 
     // Add schedules to the beginning of _upcomingEvents
     for (var schedule in schedules) {
       if (schedule.activities.isNotEmpty) {
-        // Get the first activity as a preview
         final firstActivity = schedule.activities.first;
+        final lastActivity = schedule.activities.last;
 
-        // Format time range
+        // Format time range using local start and end times
         final timeFormat = DateFormat('h:mm a');
         final timeRange =
-            '${timeFormat.format(schedule.startTime)} - ${timeFormat.format(schedule.endTime)}';
+            '${timeFormat.format(firstActivity.startTime)} - ${timeFormat.format(lastActivity.endTime)}';
 
-        // Get location from the first activity description (or a default)
+        // Extract location from description or fallback
         String location = '';
         try {
-          // Try to extract location from description
           final descParts = firstActivity.description.split(' at ');
           if (descParts.length > 1) {
             location = descParts[1].split('.')[0];
@@ -157,22 +162,29 @@ class _HomePageState extends State<HomePage>
           location = 'Various Locations';
         }
 
-        // Add to upcoming events
+        // Title depending on how many activities exist
+        String title;
+        if (schedule.activities.length > 1) {
+          title =
+              '${firstActivity.title} & ${schedule.activities.length - 1} more';
+        } else {
+          title = firstActivity.title;
+        }
+
         _upcomingEvents.insert(0, {
           'isGroup': false,
-          'isSchedule': true, // Mark as a schedule
+          'isSchedule': true,
           'scheduleId': schedule.id,
-          'title':
-              '${firstActivity.title} & ${schedule.activities.length - 1} more',
+          'title': title,
           'time': timeRange,
           'location': location,
           'participants': 0,
-          'schedule': schedule, // Include the full schedule for navigation
+          'schedule': schedule,
         });
       }
     }
 
-    // Limit to 5 total events to avoid overwhelming the UI
+    // Limit to 5 total events
     if (_upcomingEvents.length > 5) {
       _upcomingEvents = _upcomingEvents.sublist(0, 5);
     }
