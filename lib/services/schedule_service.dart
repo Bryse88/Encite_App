@@ -9,32 +9,73 @@ class ScheduleService {
   final String apiUrl =
       'https://encite-mvp-backend.onrender.com/generate_schedule';
 
-  Future<Schedule?> generateSchedule(Map<String, dynamic> payload) async {
-    try {
-      print('Sending request to: $apiUrl');
-      print('Payload: ${json.encode(payload)}');
+  // Future<Schedule?> generateSchedule(Map<String, dynamic> payload) async {
+  //   try {
+  //     print('Sending request to: $apiUrl');
+  //     print('Payload: ${json.encode(payload)}');
 
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
+  //     final response = await http.post(
+  //       Uri.parse(apiUrl),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: json.encode(payload),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final Map<String, dynamic> data = json.decode(response.body);
+  //       print('Received schedule response: ${response.body}');
+  //       return Schedule.fromJson(data);
+  //     } else {
+  //       print('Error: HTTP status ${response.statusCode}');
+  //       print('Response: ${response.body}');
+  //       return null;
+  //     }
+  //   } catch (e) {
+  //     print('Error generating schedule: $e');
+  //     return null;
+  //   }
+  // }
+  Future<Map<String, dynamic>> generateSchedule(
+      Map<String, dynamic> payload) async {
+    // Fake mock schedule instead of API call
+    await Future.delayed(const Duration(seconds: 2)); // simulate loading
+
+    return {
+      "activities": [
+        {
+          "title": "Coffee at Indie Coffee",
+          "startTime": "4:00pm",
+          "endTime": "5:00pm",
+          "location": "1225 Regent St, Madison, WI",
+          "imageUrl":
+              "https://s3-media0.fl.yelpcdn.com/bphoto/IZtXZIMnIxAAuDSnGaUExQ/o.jpg",
+          "cost": 6.0,
+          "transportation": "Walking"
         },
-        body: json.encode(payload),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        print('Received schedule response: ${response.body}');
-        return Schedule.fromJson(data);
-      } else {
-        print('Error: HTTP status ${response.statusCode}');
-        print('Response: ${response.body}');
-        return null;
-      }
-    } catch (e) {
-      print('Error generating schedule: $e');
-      return null;
-    }
+        {
+          "title": "Early Dinner at Greenbush Bar",
+          "startTime": "5:00pm",
+          "endTime": "6:00pm",
+          "location": "914 Regent St, Madison, WI",
+          "imageUrl":
+              "https://s3-media0.fl.yelpcdn.com/bphoto/t7j0Gk16NLlubcMKlXOeyA/o.jpg",
+          "cost": 12.0,
+          "transportation": "Walking"
+        },
+        {
+          "title": "Attend Midwest Mix-Up Show",
+          "startTime": "6:30pm",
+          "endTime": "7:00pm",
+          "location": "1206 Regent St, Madison, WI (The Annex)",
+          "imageUrl":
+              "https://www.theredzonemadison.com/wp-content/uploads/2013/12/Live-Music1.jpg",
+          "cost": 24.5,
+          "transportation": "Walking"
+        },
+      ],
+      "totalCost": 42.5,
+    };
   }
 
   Future<Activity?> requestSubstituteActivity(

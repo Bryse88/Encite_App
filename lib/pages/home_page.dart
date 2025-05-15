@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:ui';
+import 'package:encite/components/ChatComponents/chat_service.dart';
 import 'package:encite/components/Colors/uber_colors.dart';
 import 'package:encite/components/Schedule/schedule_presentation_page.dart';
 import 'package:encite/models/schedule.dart';
@@ -31,6 +33,9 @@ class _HomePageState extends State<HomePage>
   List<Map<String, dynamic>> _notifications = [];
   int _unreadNotificationCount = 0;
   bool _loadingNotifications = true;
+  bool _hasUnreadMessages = false;
+  final ChatService _chatService = ChatService();
+  Timer? _messageCheckTimer;
 
   // MyDay related state properties
   DateTime _selectedDate = DateTime.now();
@@ -96,6 +101,7 @@ class _HomePageState extends State<HomePage>
 
     _fetchUserName();
     _fetchUserSchedules();
+    _checkForUnreadMessages(); // Check initially
   }
 
   Future<void> _fetchUserSchedules() async {
@@ -257,6 +263,103 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  // Widget buildAvailabilityToggle() {
+  //   return Row(
+  //     children: [
+  //       // Updated toggle with Uber-style colors and aesthetics
+  //       Container(
+  //         decoration: BoxDecoration(
+  //           borderRadius: BorderRadius.circular(20),
+  //           color: isAvailable
+  //               ? UberColors.primary.withOpacity(0.15)
+  //               : UberColors.cardBg,
+  //         ),
+  //         child: InkWell(
+  //           borderRadius: BorderRadius.circular(20),
+  //           onTap: () {
+  //             setState(() => isAvailable = !isAvailable);
+  //             logAvailabilityStatus(isAvailable);
+  //           },
+  //           child: Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //             child: Row(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 Icon(
+  //                   isAvailable ? Icons.circle : Icons.do_not_disturb,
+  //                   color: isAvailable
+  //                       ? UberColors.primary
+  //                       : UberColors.textSecondary,
+  //                   size: 16,
+  //                 ),
+  //                 const SizedBox(width: 8),
+  //                 Text(
+  //                   isAvailable ? 'Available' : 'Busy',
+  //                   style: TextStyle(
+  //                     color: isAvailable
+  //                         ? UberColors.primary
+  //                         : UberColors.textSecondary,
+  //                     fontWeight: FontWeight.w500,
+  //                     fontSize: 14,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(width: 16),
+  //       // Updated message button with Uber styling
+  //       GestureDetector(
+  //         onTap: () {
+  //           Navigator.push(
+  //             context,
+  //             MaterialPageRoute(builder: (context) => const ChatsPage()),
+  //           );
+  //         },
+  //         child: Stack(
+  //           children: [
+  //             Container(
+  //               width: 36,
+  //               height: 36,
+  //               decoration: BoxDecoration(
+  //                 color: UberColors.cardBg,
+  //                 borderRadius: BorderRadius.circular(18),
+  //                 boxShadow: [
+  //                   BoxShadow(
+  //                     color: Colors.black.withOpacity(0.2),
+  //                     blurRadius: 4,
+  //                     offset: const Offset(0, 2),
+  //                   ),
+  //                 ],
+  //               ),
+  //               child: const Icon(
+  //                 Icons.chat_bubble_outline_rounded,
+  //                 color: UberColors.textPrimary,
+  //                 size: 18,
+  //               ),
+  //             ),
+  //             // Notification dot
+  //             Positioned(
+  //               right: 0,
+  //               top: 0,
+  //               child: Container(
+  //                 width: 10,
+  //                 height: 10,
+  //                 decoration: BoxDecoration(
+  //                   color: UberColors.error,
+  //                   borderRadius: BorderRadius.circular(5),
+  //                   border:
+  //                       Border.all(color: UberColors.background, width: 1.5),
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
   Widget buildAvailabilityToggle() {
     return Row(
       children: [
@@ -303,13 +406,21 @@ class _HomePageState extends State<HomePage>
           ),
         ),
         const SizedBox(width: 16),
-        // Updated message button with Uber styling
+        // Updated message button with dynamic notification indicator
         GestureDetector(
           onTap: () {
+            // Reset the unread indicator when navigating to messages
+            _chatService.resetUnreadMessageIndicator();
+            setState(() {
+              _hasUnreadMessages = false;
+            });
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ChatsPage()),
-            );
+            ).then((_) {
+              // Check for unread messages again when returning from the chat page
+              _checkForUnreadMessages();
+            });
           },
           child: Stack(
             children: [
@@ -333,21 +444,22 @@ class _HomePageState extends State<HomePage>
                   size: 18,
                 ),
               ),
-              // Notification dot
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: UberColors.error,
-                    borderRadius: BorderRadius.circular(5),
-                    border:
-                        Border.all(color: UberColors.background, width: 1.5),
+              // Only show notification dot when there are unread messages
+              if (_hasUnreadMessages)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: UberColors.error,
+                      borderRadius: BorderRadius.circular(5),
+                      border:
+                          Border.all(color: UberColors.background, width: 1.5),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -362,9 +474,24 @@ class _HomePageState extends State<HomePage>
         eventDate.day == date.day);
   }
 
+  // Add this method to _HomePageState:
+  Future<void> _checkForUnreadMessages() async {
+    try {
+      final hasUnread = await _chatService.hasUnreadMessages();
+      if (mounted) {
+        setState(() {
+          _hasUnreadMessages = hasUnread;
+        });
+      }
+    } catch (e) {
+      print('Error checking for unread messages: $e');
+    }
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
+    _messageCheckTimer?.cancel();
     super.dispose();
   }
 

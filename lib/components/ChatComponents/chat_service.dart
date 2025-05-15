@@ -787,4 +787,128 @@ class ChatService {
 
     return unreadCount;
   }
+
+  // Get total count of unread messages across all conversations
+  Future<int> getTotalUnreadMessagesCount() async {
+    try {
+      // Get all conversations for the current user
+      final conversationsSnapshot = await _firestore
+          .collection('conversations')
+          .where('participants', arrayContains: currentUserId)
+          .get();
+
+      int totalUnreadCount = 0;
+
+      // For each conversation, count unread messages
+      for (var conversationDoc in conversationsSnapshot.docs) {
+        final conversationId = conversationDoc.id;
+
+        // Get messages that are:
+        // 1. Not sent by current user
+        // 2. Not marked as read by current user
+        final messagesSnapshot = await _firestore
+            .collection('conversations')
+            .doc(conversationId)
+            .collection('messages')
+            .where('senderId', isNotEqualTo: currentUserId)
+            .get();
+
+        for (var doc in messagesSnapshot.docs) {
+          final data = doc.data();
+          final Map<String, dynamic> readBy = data['readBy'] ?? {};
+
+          if (!readBy.containsKey(currentUserId)) {
+            totalUnreadCount++;
+          }
+        }
+      }
+
+      // Update the user's metadata with the unread count
+      await _firestore.collection('users').doc(currentUserId).update({
+        'unreadMessages': totalUnreadCount,
+        'lastUnreadCheck': FieldValue.serverTimestamp(),
+      });
+
+      return totalUnreadCount;
+    } catch (e) {
+      print('Error getting total unread messages count: $e');
+      return 0;
+    }
+  }
+
+// Optimized method to check if there are any unread messages (returns boolean)
+// This is more efficient than getting a full count when we just need to know if there are any
+  Future<bool> hasUnreadMessages() async {
+    try {
+      // First check user's cached unread count if available
+      final userDoc =
+          await _firestore.collection('users').doc(currentUserId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        if (userData != null && userData.containsKey('unreadMessages')) {
+          final int cachedCount = userData['unreadMessages'] ?? 0;
+          if (cachedCount > 0) {
+            return true;
+          }
+        }
+      }
+
+      // If no cached count or it's zero, do a more thorough check
+      // Look for at least one unread message across all conversations
+      final conversationsSnapshot = await _firestore
+          .collection('conversations')
+          .where('participants', arrayContains: currentUserId)
+          .get();
+
+      for (var conversationDoc in conversationsSnapshot.docs) {
+        final conversationId = conversationDoc.id;
+
+        // Check if there's at least one unread message
+        final messagesSnapshot = await _firestore
+            .collection('conversations')
+            .doc(conversationId)
+            .collection('messages')
+            .where('senderId', isNotEqualTo: currentUserId)
+            .limit(
+                1) // We only need to find 1 unread message to know we have unread messages
+            .get();
+
+        for (var doc in messagesSnapshot.docs) {
+          final data = doc.data();
+          final Map<String, dynamic> readBy = data['readBy'] ?? {};
+
+          if (!readBy.containsKey(currentUserId)) {
+            // Found an unread message, update the user's metadata
+            await _firestore.collection('users').doc(currentUserId).update({
+              'hasUnreadMessages': true,
+              'lastUnreadCheck': FieldValue.serverTimestamp(),
+            });
+            return true;
+          }
+        }
+      }
+
+      // No unread messages found
+      await _firestore.collection('users').doc(currentUserId).update({
+        'hasUnreadMessages': false,
+        'lastUnreadCheck': FieldValue.serverTimestamp(),
+      });
+      return false;
+    } catch (e) {
+      print('Error checking for unread messages: $e');
+      return false;
+    }
+  }
+
+// Reset unread message indicator when user navigates to the messages page
+  Future<void> resetUnreadMessageIndicator() async {
+    try {
+      await _firestore.collection('users').doc(currentUserId).update({
+        'hasUnreadMessages': false,
+        'lastViewedMessages': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error resetting unread indicator: $e');
+    }
+  }
 }

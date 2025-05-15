@@ -4,6 +4,7 @@ import 'package:encite/components/group_components/steps/budgets_step.dart';
 import 'package:encite/components/group_components/steps/location_step.dart';
 import 'package:encite/components/group_components/steps/timeframe.dart';
 import 'package:encite/components/group_components/steps/transportation_step.dart';
+import 'package:encite/components/mock/SchedulePresentationPage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:encite/services/schedule_service.dart';
@@ -191,7 +192,7 @@ class _SchedulerFormState extends State<SoloSchedulerForm>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SchedulePresentationPage(schedule: schedule),
+          builder: (_) => SchedulePresentationPage1(schedule: schedule),
         ),
       );
     } else {

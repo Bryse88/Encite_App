@@ -340,7 +340,7 @@ class Gallery extends StatelessWidget {
             //   fit: BoxFit.cover,
             // ),
             child: Image.asset(
-              'lib/img/chazen.jpg',
+              'lib/img/Makers_mart.jpg',
               width: double.infinity,
               height: double.infinity,
               fit: BoxFit.cover,
@@ -393,7 +393,7 @@ class Gallery extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'Student Night at the Chazen',
+                    'Spring Makers Market',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -411,7 +411,7 @@ class Gallery extends StatelessWidget {
                       ),
                       SizedBox(width: 6),
                       Text(
-                        'May 2',
+                        'Saturday, May 17',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 14,
