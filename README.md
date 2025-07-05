@@ -8,7 +8,6 @@ AI-powered social planning app that makes coordinating group activities effortle
 - **Group Chat** - Real-time messaging for coordinating plans
 - **Friend Management** - Add friends and see availability status
 - **Event Discovery** - Find local events and activities
-- **Budget Tracking** - Manage spending with integrated payment features
 
 ## Tech Stack
 
